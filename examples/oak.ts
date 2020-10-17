@@ -1,19 +1,3 @@
-# OAuth2 Client for Deno
-
-Minimalistic OAuth 2.0 client for Deno.
-Inspired by [js-client-oauth2](https://github.com/mulesoft/js-client-oauth2/).
-
-This module tries not to make assumptions on your use-cases.
-As such, it
-- has no external dependencies (not even Deno's standard library)
-- can be used with Deno's [http module](https://deno.land/std@0.71.0/http) or any other library for handling http requests, like [oak](https://deno.land/x/oak)
-- only implements OAuth 2.0 grants, letting you take care of storing and retrieving sessions, managing state parameters, etc.
-
-## Usage
-
-### GitHub API example using [oak](https://deno.land/x/oak)
-
-```ts
 import { Application, Router } from "https://deno.land/x/oak@v6.3.0/mod.ts";
 import { OAuth2Client } from "https://deno.land/x/oauth2_client/mod.ts";
 
@@ -53,8 +37,3 @@ const app = new Application();
 app.use(router.allowedMethods(), router.routes());
 
 await app.listen({ port: 8000 });
-```
-
-### More Examples
-
-For more examples, check out the examples directory.
