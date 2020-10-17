@@ -15,16 +15,16 @@ import type {
 } from "./code_flow.ts";
 import { AuthError, AuthServerResponseError } from "./errors.ts";
 
-//#region CodeFlow.getAuthorizationUri successful paths
+//#region AuthorizationCodeGrant.getAuthorizationUri successful paths
 
-Deno.test("CodeFlow.getAuthorizationUri works without additional options", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works without additional options", () => {
   assertMatchesUrl(
     getOAuth2Client().code.getAuthorizationUri(),
     "https://auth.server/auth?response_type=code&client_id=clientId",
   );
 });
 
-Deno.test("CodeFlow.getAuthorizationUri works when passing a single scope", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing a single scope", () => {
   assertMatchesUrl(
     getOAuth2Client().code.getAuthorizationUri({
       scope: "singleScope",
@@ -33,7 +33,7 @@ Deno.test("CodeFlow.getAuthorizationUri works when passing a single scope", () =
   );
 });
 
-Deno.test("CodeFlow.getAuthorizationUri works when passing multiple scopes", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing multiple scopes", () => {
   assertMatchesUrl(
     getOAuth2Client().code.getAuthorizationUri({
       scope: ["multiple", "scopes"],
@@ -42,7 +42,7 @@ Deno.test("CodeFlow.getAuthorizationUri works when passing multiple scopes", () 
   );
 });
 
-Deno.test("CodeFlow.getAuthorizationUri works when passing a state parameter", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing a state parameter", () => {
   assertMatchesUrl(
     getOAuth2Client().code.getAuthorizationUri({
       state: "someState",
@@ -51,7 +51,7 @@ Deno.test("CodeFlow.getAuthorizationUri works when passing a state parameter", (
   );
 });
 
-Deno.test("CodeFlow.getAuthorizationUri works with redirectUri", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri", () => {
   assertMatchesUrl(
     getOAuth2Client({
       redirectUri: "https://example.app/redirect",
@@ -60,7 +60,7 @@ Deno.test("CodeFlow.getAuthorizationUri works with redirectUri", () => {
   );
 });
 
-Deno.test("CodeFlow.getAuthorizationUri works with redirectUri and a single scope", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and a single scope", () => {
   assertMatchesUrl(
     getOAuth2Client({
       redirectUri: "https://example.app/redirect",
@@ -71,7 +71,7 @@ Deno.test("CodeFlow.getAuthorizationUri works with redirectUri and a single scop
   );
 });
 
-Deno.test("CodeFlow.getAuthorizationUri works with redirectUri and multiple scopes", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and multiple scopes", () => {
   assertMatchesUrl(
     getOAuth2Client({
       redirectUri: "https://example.app/redirect",
@@ -82,7 +82,7 @@ Deno.test("CodeFlow.getAuthorizationUri works with redirectUri and multiple scop
   );
 });
 
-Deno.test("CodeFlow.getAuthorizationUri uses default scopes if no scope was specified", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses default scopes if no scope was specified", () => {
   assertMatchesUrl(
     getOAuth2Client({
       defaults: { scope: ["default", "scopes"] },
@@ -91,7 +91,7 @@ Deno.test("CodeFlow.getAuthorizationUri uses default scopes if no scope was spec
   );
 });
 
-Deno.test("CodeFlow.getAuthorizationUri uses specified scopes over default scopes", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses specified scopes over default scopes", () => {
   assertMatchesUrl(
     getOAuth2Client({
       defaults: { scope: ["default", "scopes"] },
@@ -104,14 +104,14 @@ Deno.test("CodeFlow.getAuthorizationUri uses specified scopes over default scope
 
 //#endregion
 
-//#region TODO: CodeFlow.getAuthorization error paths
+//#region TODO: AuthorizationCodeGrant.getAuthorization error paths
 
 //#endregion
 
-//#region CodeFlow.getToken
-//#region CodeFlow.getToken error paths
+//#region AuthorizationCodeGrant.getToken
+//#region AuthorizationCodeGrant.getToken error paths
 
-Deno.test("CodeFlow.getToken throws if the received redirectUri does not match the configured one", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the received redirectUri does not match the configured one", async () => {
   await assertThrowsAsync(
     () =>
       getOAuth2Client({
@@ -124,7 +124,7 @@ Deno.test("CodeFlow.getToken throws if the received redirectUri does not match t
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the callbackUri does not contain any parameters", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri does not contain any parameters", async () => {
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
@@ -135,7 +135,7 @@ Deno.test("CodeFlow.getToken throws if the callbackUri does not contain any para
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the callbackUri contains an error parameter", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri contains an error parameter", async () => {
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
@@ -149,7 +149,7 @@ Deno.test("CodeFlow.getToken throws if the callbackUri contains an error paramet
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the callbackUri contains the error, error_description and error_uri parameters and adds them to the error object", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri contains the error, error_description and error_uri parameters and adds them to the error object", async () => {
   const error = await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
@@ -170,7 +170,7 @@ Deno.test("CodeFlow.getToken throws if the callbackUri contains the error, error
   assertEquals(error.errorUri, "error://uri");
 });
 
-Deno.test("CodeFlow.getToken throws if the callbackUri doesn't contain a code", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri doesn't contain a code", async () => {
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
@@ -185,7 +185,7 @@ Deno.test("CodeFlow.getToken throws if the callbackUri doesn't contain a code", 
   );
 });
 
-Deno.test("CodeFlow.getToken throws if it didn't receive a state and the state validator fails", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if it didn't receive a state and the state validator fails", async () => {
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
@@ -200,7 +200,7 @@ Deno.test("CodeFlow.getToken throws if it didn't receive a state and the state v
   );
 });
 
-Deno.test("CodeFlow.getToken throws if it didn't receive a state but a state was expected", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if it didn't receive a state but a state was expected", async () => {
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
@@ -215,7 +215,7 @@ Deno.test("CodeFlow.getToken throws if it didn't receive a state but a state was
   );
 });
 
-Deno.test("CodeFlow.getToken throws if it received a state that does not match the given state parameter", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if it received a state that does not match the given state parameter", async () => {
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
@@ -230,7 +230,7 @@ Deno.test("CodeFlow.getToken throws if it received a state that does not match t
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the stateValidator returns false", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the stateValidator returns false", async () => {
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
@@ -245,7 +245,7 @@ Deno.test("CodeFlow.getToken throws if the stateValidator returns false", async 
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the server responded with a Content-Type other than application/json", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a Content-Type other than application/json", async () => {
   await assertThrowsAsync(
     () =>
       mockAccessTokenResponse_({
@@ -263,7 +263,7 @@ Deno.test("CodeFlow.getToken throws if the server responded with a Content-Type 
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the server responded with a correctly formatted error", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a correctly formatted error", async () => {
   await assertThrowsAsync(
     () =>
       mockAccessTokenResponse_({
@@ -278,7 +278,7 @@ Deno.test("CodeFlow.getToken throws if the server responded with a correctly for
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the server responded with a 4xx or 5xx and the body doesn't contain an error parameter", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a 4xx or 5xx and the body doesn't contain an error parameter", async () => {
   await assertThrowsAsync(
     () =>
       mockAccessTokenResponse_({
@@ -318,7 +318,7 @@ Deno.test("CodeFlow.getToken throws if the server responded with a 4xx or 5xx an
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the server's response is not a JSON object", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the server's response is not a JSON object", async () => {
   await assertThrowsAsync(
     () =>
       mockAccessTokenResponse_({
@@ -357,7 +357,7 @@ Deno.test("CodeFlow.getToken throws if the server's response is not a JSON objec
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the server's response does not contain a token_type", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the server's response does not contain a token_type", async () => {
   await assertThrowsAsync(
     () =>
       mockAccessTokenResponse_({
@@ -371,7 +371,7 @@ Deno.test("CodeFlow.getToken throws if the server's response does not contain a 
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the server's response does not contain an access_token", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the server's response does not contain an access_token", async () => {
   await assertThrowsAsync(
     () =>
       mockAccessTokenResponse_({
@@ -385,7 +385,7 @@ Deno.test("CodeFlow.getToken throws if the server's response does not contain an
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the server response's access_token is not a string", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the server response's access_token is not a string", async () => {
   await assertThrowsAsync(
     () =>
       mockAccessTokenResponse_({
@@ -402,7 +402,7 @@ Deno.test("CodeFlow.getToken throws if the server response's access_token is not
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the server response's refresh_token property is not a string", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the server response's refresh_token property is not a string", async () => {
   await assertThrowsAsync(
     () =>
       mockAccessTokenResponse_({
@@ -420,7 +420,7 @@ Deno.test("CodeFlow.getToken throws if the server response's refresh_token prope
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the server response's expires_in property is not a number", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the server response's expires_in property is not a number", async () => {
   await assertThrowsAsync(
     () =>
       mockAccessTokenResponse_({
@@ -438,7 +438,7 @@ Deno.test("CodeFlow.getToken throws if the server response's expires_in property
   );
 });
 
-Deno.test("CodeFlow.getToken throws if the server response's scope property is not a string", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the server response's scope property is not a string", async () => {
   await assertThrowsAsync(
     () =>
       mockAccessTokenResponse_({
@@ -458,9 +458,9 @@ Deno.test("CodeFlow.getToken throws if the server response's scope property is n
 
 //#endregion
 
-//#region CodeFlow.getToken successful paths
+//#region AuthorizationCodeGrant.getToken successful paths
 
-Deno.test("CodeFlow.getToken parses the minimal token response correctly", async () => {
+Deno.test("AuthorizationCodeGrant.getToken parses the minimal token response correctly", async () => {
   const r = await mockAccessTokenResponse_({
     callbackUrl: { code: "authCode" },
     tokenResponse: {
@@ -476,7 +476,7 @@ Deno.test("CodeFlow.getToken parses the minimal token response correctly", async
   });
 });
 
-Deno.test("CodeFlow.getToken parses the full token response correctly", async () => {
+Deno.test("AuthorizationCodeGrant.getToken parses the full token response correctly", async () => {
   const r = await mockAccessTokenResponse_({
     callbackUrl: { code: "authCode" },
     tokenResponse: {
@@ -498,14 +498,14 @@ Deno.test("CodeFlow.getToken parses the full token response correctly", async ()
   });
 });
 
-Deno.test("CodeFlow.getToken doesn't throw if it didn't receive a state but the state validator returns true", async () => {
+Deno.test("AuthorizationCodeGrant.getToken doesn't throw if it didn't receive a state but the state validator returns true", async () => {
   await mockAccessTokenResponse_({
     callbackUrl: { code: "code" },
     callParameters: { stateValidator: () => true },
   });
 });
 
-Deno.test("CodeFlow.getToken builds a correct request to the token endpoint by default", async () => {
+Deno.test("AuthorizationCodeGrant.getToken builds a correct request to the token endpoint by default", async () => {
   const r = await mockAccessTokenResponse_({
     callbackUrl: { code: "authCode" },
   });
@@ -521,7 +521,7 @@ Deno.test("CodeFlow.getToken builds a correct request to the token endpoint by d
   );
 });
 
-Deno.test("CodeFlow.getToken correctly adds the redirectUri to the token request if specified", async () => {
+Deno.test("AuthorizationCodeGrant.getToken correctly adds the redirectUri to the token request if specified", async () => {
   const r = await mockAccessTokenResponse_({
     clientConfig: {
       redirectUri: "http://some.redirect/uri",
@@ -534,7 +534,7 @@ Deno.test("CodeFlow.getToken correctly adds the redirectUri to the token request
   );
 });
 
-Deno.test("CodeFlow.getToken sends the clientId as form parameter if no clientSecret is set", async () => {
+Deno.test("AuthorizationCodeGrant.getToken sends the clientId as form parameter if no clientSecret is set", async () => {
   const r = await mockAccessTokenResponse_({
     callbackUrl: { code: "authCode" },
   });
@@ -545,7 +545,7 @@ Deno.test("CodeFlow.getToken sends the clientId as form parameter if no clientSe
   assertEquals(r.request.headers.get("Authorization"), null);
 });
 
-Deno.test("CodeFlow.getToken sends the correct Authorization header if the clientSecret is set", async () => {
+Deno.test("AuthorizationCodeGrant.getToken sends the correct Authorization header if the clientSecret is set", async () => {
   const r = await mockAccessTokenResponse_({
     clientConfig: { clientSecret: "super-secret" },
     callbackUrl: { code: "authCode" },
@@ -557,7 +557,7 @@ Deno.test("CodeFlow.getToken sends the correct Authorization header if the clien
   assertEquals((await r.request.formData()).get("client_id"), null);
 });
 
-Deno.test("CodeFlow.getToken uses the default request options", async () => {
+Deno.test("AuthorizationCodeGrant.getToken uses the default request options", async () => {
   const r = await mockAccessTokenResponse_({
     clientConfig: {
       defaults: {
@@ -577,7 +577,7 @@ Deno.test("CodeFlow.getToken uses the default request options", async () => {
   assertMatch(await r.request.text(), /.*custom-param=value.*/);
 });
 
-Deno.test("CodeFlow.getToken uses the passed request options over the default options", async () => {
+Deno.test("AuthorizationCodeGrant.getToken uses the passed request options over the default options", async () => {
   const r = await mockAccessTokenResponse_({
     clientConfig: {
       defaults: {
@@ -604,7 +604,7 @@ Deno.test("CodeFlow.getToken uses the passed request options over the default op
   assertNotMatch(await r.request.text(), /.*custom-param=value.*/);
 });
 
-Deno.test("CodeFlow.getToken uses the default state validator if no state or validator was given", async () => {
+Deno.test("AuthorizationCodeGrant.getToken uses the default state validator if no state or validator was given", async () => {
   const defaultValidator = spy(() => true);
 
   await mockAccessTokenResponse_({
@@ -620,7 +620,7 @@ Deno.test("CodeFlow.getToken uses the default state validator if no state or val
   );
 });
 
-Deno.test("CodeFlow.getToken uses the passed state validator over the default validator", async () => {
+Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over the default validator", async () => {
   const defaultValidator = spy(() => true);
   const validator = spy(() => true);
 
@@ -636,7 +636,7 @@ Deno.test("CodeFlow.getToken uses the passed state validator over the default va
   assertEquals(validator.calls, [{ args: ["some_state"], returned: true }]);
 });
 
-Deno.test("CodeFlow.getToken uses the passed state validator over the passed state", async () => {
+Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over the passed state", async () => {
   const defaultValidator = spy(() => true);
   const validator = spy(() => true);
 

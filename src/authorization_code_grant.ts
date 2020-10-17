@@ -28,7 +28,7 @@ export interface Tokens {
   scope?: string[];
 }
 
-export class CodeFlow {
+export class AuthorizationCodeGrant {
   constructor(
     private readonly client: OAuth2Client,
   ) {}

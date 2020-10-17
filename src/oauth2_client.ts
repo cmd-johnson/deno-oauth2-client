@@ -1,4 +1,4 @@
-import { CodeFlow } from "./code_flow.ts";
+import { AuthorizationCodeGrant } from "./authorization_code_grant.ts";
 
 export interface RequestOptions {
   headers?: Record<string, string>;
@@ -19,7 +19,7 @@ export interface OAuth2ClientConfig {
 }
 
 export class OAuth2Client {
-  public code = new CodeFlow(this);
+  public code = new AuthorizationCodeGrant(this);
 
   constructor(
     public readonly config: Readonly<OAuth2ClientConfig>,
