@@ -23,7 +23,7 @@ export class AuthError extends Error {
   public static fromURLSearchParams(params: URLSearchParams) {
     const error = params.get("error");
     if (error === null) {
-      throw new TypeError("error must be set");
+      throw new TypeError("error URL parameter must be set");
     }
     const response: ErrorResponseParams = {
       error: params.get("error") as string,
@@ -51,8 +51,8 @@ export class AuthError extends Error {
 export class AuthServerResponseError extends Error {
   public readonly response: Response;
 
-  constructor(response: Response) {
-    super("Invalid server response");
+  constructor(description: string, response: Response) {
+    super(`Invalid server response: ${description}`);
     this.response = response;
   }
 }
