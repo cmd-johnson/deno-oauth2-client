@@ -23,7 +23,7 @@ export class AuthError extends Error {
   public static fromURLSearchParams(params: URLSearchParams) {
     const error = params.get("error");
     if (error === null) {
-      throw new TypeError("error must be set");
+      throw new TypeError("error URL parameter must be set");
     }
     const response: ErrorResponseParams = {
       error: params.get("error") as string,
