@@ -14,7 +14,7 @@ export interface OAuth2ClientConfig {
   defaults?: {
     requestOptions?: RequestOptions;
     scope?: string | string[];
-    stateValidator?: (state: string) => boolean;
+    stateValidator?: (state: string | null) => boolean;
   };
 }
 

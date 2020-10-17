@@ -101,8 +101,8 @@ Deno.test("AuthServerResponseError constructor works", () => {
     status: 418,
     statusText: "I'm a teapot",
   });
-  const error = new AuthServerResponseError(response);
+  const error = new AuthServerResponseError("description", response);
 
-  assertEquals(error.message, "Invalid server response");
+  assertEquals(error.message, "Invalid server response: description");
   assertEquals(error.response, response);
 });

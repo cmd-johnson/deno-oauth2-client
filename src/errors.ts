@@ -51,8 +51,8 @@ export class AuthError extends Error {
 export class AuthServerResponseError extends Error {
   public readonly response: Response;
 
-  constructor(response: Response) {
-    super("Invalid server response");
+  constructor(description: string, response: Response) {
+    super(`Invalid server response: ${description}`);
     this.response = response;
   }
 }

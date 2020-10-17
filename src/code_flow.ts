@@ -6,9 +6,9 @@ interface GetUriOptions {
   scope?: string | string[];
 }
 
-interface GetTokenOptions {
+export interface GetTokenOptions {
   state?: string;
-  stateValidator?: (state: string) => boolean;
+  stateValidator?: (state: string | null) => boolean;
   requestOptions?: RequestOptions;
 }
 
@@ -40,7 +40,7 @@ export class CodeFlow {
     if (typeof this.client.config.redirectUri === "string") {
       params.set("redirect_uri", this.client.config.redirectUri);
     }
-    const scope = this.client.config.defaults?.scope || options.scope;
+    const scope = options.scope ?? this.client.config.defaults?.scope;
     if (scope) {
       params.set("scope", Array.isArray(scope) ? scope.join(" ") : scope);
     }
@@ -48,6 +48,25 @@ export class CodeFlow {
       params.set("state", options.state);
     }
     return new URL(`?${params}`, this.client.config.authorizationEndpointUri);
+  }
+
+  public async getToken(
+    authResponseUri: string | URL,
+    options: GetTokenOptions = {},
+  ): Promise<Tokens> {
+    const validated = this.validateAuthorizationResponse(
+      this.toUrl(authResponseUri),
+      options,
+    );
+
+    const request = this.buildAccessTokenRequest(
+      validated.code,
+      options.requestOptions,
+    );
+
+    const accessTokenResponse = await fetch(request);
+
+    return this.validateTokenResponse(accessTokenResponse);
   }
 
   private validateAuthorizationResponse(
@@ -82,14 +101,23 @@ export class CodeFlow {
       throw new TypeError("Missing code, unable to request token");
     }
 
-    const state = params.get("state") || undefined;
-    const stateValidator = this.client.config.defaults?.stateValidator ||
-      options.stateValidator || (options.state && ((s) => s === options.state));
-    if (stateValidator && (!state || !stateValidator(state))) {
-      throw new TypeError(`Invalid state: ${params.get("state")}`);
+    const state = params.get("state");
+    const stateValidator = options.stateValidator ??
+      (options.state && ((s) => s === options.state)) ??
+      this.client.config.defaults?.stateValidator;
+
+    if (stateValidator && !stateValidator(state)) {
+      if (state === null) {
+        throw new TypeError("Missing state");
+      } else {
+        throw new TypeError(`Invalid state: ${params.get("state")}`);
+      }
     }
 
-    return { code, state };
+    if (state) {
+      return { code, state };
+    }
+    return { code };
   }
 
   private buildAccessTokenRequest(
@@ -133,52 +161,85 @@ export class CodeFlow {
     });
   }
 
-  // TODO: Test getToken options and how/that they override the default options provided by the OAuth2Client
-  public async getToken(
-    authResponseUri: string | URL,
-    options: GetTokenOptions = {},
-  ): Promise<Tokens> {
-    const url = authResponseUri instanceof URL
-      ? authResponseUri
-      : new URL(authResponseUri, "http://ignored");
+  private toUrl(url: string | URL): URL {
+    return url instanceof URL ? url : new URL(url, "http://ignored");
+  }
 
-    const validated = this.validateAuthorizationResponse(url, options);
-
-    const request = this.buildAccessTokenRequest(
-      validated.code,
-      options.requestOptions,
-    );
-
-    const accessTokenResponse = await fetch(request);
-
-    if (accessTokenResponse.ok) {
-      try {
-        const body: AccessTokenResponse = await accessTokenResponse.json();
-
-        if (
-          typeof body !== "object" || Array.isArray(body) ||
-          typeof body.access_token !== "string" ||
-          typeof body.token_type !== "string" ||
-          ("refresh_token" in body && typeof body.refresh_token !== "string") ||
-          ("expires_in" in body && typeof body.expires_in !== "number") ||
-          ("scope" in body && typeof body.scope !== "string")
-        ) {
-          throw new TypeError("Invalid access token response body");
-        }
-
-        return {
-          accessToken: body.access_token,
-          tokenType: body.token_type,
-          refreshToken: body.refresh_token,
-          expiresIn: body.expires_in,
-          scope: body.scope?.split(" "),
-        };
-      } catch {
-        throw new AuthServerResponseError(accessTokenResponse);
-      }
-    } else {
-      throw await this.getError(accessTokenResponse);
+  private async validateTokenResponse(response: Response): Promise<Tokens> {
+    if (!response.ok) {
+      throw await this.getError(response);
     }
+
+    let body: AccessTokenResponse;
+    try {
+      body = await response.json();
+    } catch (error) {
+      throw new AuthServerResponseError(
+        "Response is not JSON encoded",
+        response,
+      );
+    }
+
+    if (typeof body !== "object" || Array.isArray(body) || body === null) {
+      throw new AuthServerResponseError(
+        "body is not a JSON object",
+        response,
+      );
+    }
+    if (typeof body.access_token !== "string") {
+      throw new AuthServerResponseError(
+        body.access_token
+          ? "access_token is not a string"
+          : "missing access_token",
+        response,
+      );
+    }
+    if (typeof body.token_type !== "string") {
+      throw new AuthServerResponseError(
+        body.token_type ? "token_type is not a string" : "missing token_type",
+        response,
+      );
+    }
+    if (
+      body.refresh_token !== undefined &&
+      typeof body.refresh_token !== "string"
+    ) {
+      throw new AuthServerResponseError(
+        "refresh_token is not a string",
+        response,
+      );
+    }
+    if (
+      body.expires_in !== undefined && typeof body.expires_in !== "number"
+    ) {
+      throw new AuthServerResponseError(
+        "expires_in is not a number",
+        response,
+      );
+    }
+    if (body.scope !== undefined && typeof body.scope !== "string") {
+      throw new AuthServerResponseError(
+        "scope is not a string",
+        response,
+      );
+    }
+
+    const tokens: Tokens = {
+      accessToken: body.access_token,
+      tokenType: body.token_type,
+    };
+
+    if (body.refresh_token) {
+      tokens.refreshToken = body.refresh_token;
+    }
+    if (body.expires_in) {
+      tokens.expiresIn = body.expires_in;
+    }
+    if (body.scope) {
+      tokens.scope = body.scope.split(" ");
+    }
+
+    return tokens;
   }
 
   /** Tries to build an AuthError from the response and defaults to AuthServerResponseError if that fails. */
@@ -192,7 +253,10 @@ export class CodeFlow {
       }
       return new AuthError(body);
     } catch {
-      return new AuthServerResponseError(response);
+      return new AuthServerResponseError(
+        `Server returned ${response.status} and no error description was given`,
+        response,
+      );
     }
   }
 }
