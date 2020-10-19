@@ -8,11 +8,7 @@
 
 name: Deno
 
-on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+on: [push, pull_request]
 
 jobs:
   test:
@@ -28,9 +24,27 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup Deno
-        uses: denolib/setup-deno@c7d7968ad4a59c159a777f79adddad6872ee8d96
+        uses: denolib/setup-deno@master
         with:
           deno-version: ${{ matrix.deno }} # tests across multiple Deno versions
 
       - name: Run Tests
         run: deno test -A --coverage --unstable
+
+  lint:
+    strategy:
+      matrix:
+        deno: ["v1.x", "nightly"]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v2
+
+      - name: Setup Deno
+        uses: denolib/setup-deno@master
+        with:
+          deno-version: ${{ matrix.deno }}
+
+      - name: Run lint
+        run: deno lint --unstable
