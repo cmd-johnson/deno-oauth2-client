@@ -5,7 +5,7 @@ import { AuthorizationCodeGrant } from "./authorization_code_grant.ts";
 
 Deno.test("OAuth2Client.code is created", () => {
   const client = new OAuth2Client({
-    accessTokenUri: "",
+    tokenUri: "",
     authorizationEndpointUri: "",
     clientId: "",
   });

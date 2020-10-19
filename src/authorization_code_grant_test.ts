@@ -9,11 +9,10 @@ import { spy, stub } from "https://deno.land/x/mock@v0.7.0/mod.ts";
 
 import { OAuth2Client, OAuth2ClientConfig } from "./oauth2_client.ts";
 import type {
-  AccessTokenResponse,
   GetTokenOptions,
   Tokens,
-} from "./code_flow.ts";
-import { AuthError, AuthServerResponseError } from "./errors.ts";
+} from "./authorization_code_grant.ts";
+import { AuthorizationResponseError, OAuth2ResponseError, TokenResponseError } from "./errors.ts";
 
 //#region AuthorizationCodeGrant.getAuthorizationUri successful paths
 
@@ -119,7 +118,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the received redirectUri do
       }).code.getToken(
         buildAccessTokenCallback("https://example.com/invalid-redirect", {}),
       ),
-    TypeError,
+    AuthorizationResponseError,
     "Redirect path should match configured path",
   );
 });
@@ -130,7 +129,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri does not co
       getOAuth2Client().code.getToken(
         buildAccessTokenCallback("https://example.com/redirect", {}),
       ),
-    TypeError,
+    AuthorizationResponseError,
     "URI does not contain callback parameters",
   );
 });
@@ -144,7 +143,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri contains an
           { error: "invalid_request" },
         ),
       ),
-    AuthError,
+    OAuth2ResponseError,
     "invalid_request",
   );
 });
@@ -162,9 +161,9 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri contains th
           },
         ),
       ),
-    AuthError,
+    OAuth2ResponseError,
     "Error description",
-  ) as AuthError;
+  ) as OAuth2ResponseError;
   assertEquals(error.error, "invalid_request");
   assertEquals(error.errorDescription, "Error description");
   assertEquals(error.errorUri, "error://uri");
@@ -180,7 +179,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri doesn't con
           { state: "" },
         ),
       ),
-    TypeError,
+    AuthorizationResponseError,
     "Missing code, unable to request token",
   );
 });
@@ -195,7 +194,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if it didn't receive a state a
         ),
         { stateValidator: () => false },
       ),
-    TypeError,
+    AuthorizationResponseError,
     "Missing state",
   );
 });
@@ -210,7 +209,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if it didn't receive a state b
         ),
         { state: "expected_state" },
       ),
-    TypeError,
+    AuthorizationResponseError,
     "Missing state",
   );
 });
@@ -225,7 +224,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if it received a state that do
         ),
         { state: "expected_state" },
       ),
-    TypeError,
+    AuthorizationResponseError,
     "Invalid state: invalid_state",
   );
 });
@@ -240,7 +239,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the stateValidator returns 
         ),
         { stateValidator: () => false },
       ),
-    TypeError,
+    AuthorizationResponseError,
     "Invalid state: invalid_state",
   );
 });
@@ -258,8 +257,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a
           body: "",
         },
       }),
-    AuthServerResponseError,
-    "Invalid server response: Response is not JSON encoded",
+    TokenResponseError,
+    "Invalid token response: Response is not JSON encoded",
   );
 });
 
@@ -273,7 +272,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a
           body: { error: "invalid_client" },
         },
       }),
-    AuthError,
+    OAuth2ResponseError,
     "invalid_client",
   );
 });
@@ -290,8 +289,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a
           } as any,
         },
       }),
-    AuthServerResponseError,
-    "Invalid server response: Server returned 401 and no error description was given",
+    TokenResponseError,
+    "Invalid token response: Server returned 401 and no error description was given",
   );
   await assertThrowsAsync(
     () =>
@@ -302,8 +301,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a
           body: {} as any,
         },
       }),
-    AuthServerResponseError,
-    "Invalid server response: Server returned 503 and no error description was given",
+    TokenResponseError,
+    "Invalid token response: Server returned 503 and no error description was given",
   );
   await assertThrowsAsync(
     () =>
@@ -313,8 +312,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a
           status: 418,
         },
       }),
-    AuthServerResponseError,
-    "Invalid server response: Server returned 418 and no error description was given",
+    TokenResponseError,
+    "Invalid token response: Server returned 418 and no error description was given",
   );
 });
 
@@ -325,8 +324,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response is no
         callbackUrl: { code: "authCode" },
         tokenResponse: { body: '""' },
       }),
-    AuthServerResponseError,
-    "Invalid server response: body is not a JSON object",
+    TokenResponseError,
+    "Invalid token response: body is not a JSON object",
   );
   await assertThrowsAsync(
     () =>
@@ -334,8 +333,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response is no
         callbackUrl: { code: "authCode" },
         tokenResponse: { body: "1234" },
       }),
-    AuthServerResponseError,
-    "Invalid server response: body is not a JSON object",
+    TokenResponseError,
+    "Invalid token response: body is not a JSON object",
   );
   await assertThrowsAsync(
     () =>
@@ -343,8 +342,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response is no
         callbackUrl: { code: "authCode" },
         tokenResponse: { body: "null" },
       }),
-    AuthServerResponseError,
-    "Invalid server response: body is not a JSON object",
+    TokenResponseError,
+    "Invalid token response: body is not a JSON object",
   );
   await assertThrowsAsync(
     () =>
@@ -352,8 +351,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response is no
         callbackUrl: { code: "authCode" },
         tokenResponse: { body: `["array values?!!"]` },
       }),
-    AuthServerResponseError,
-    "Invalid server response: body is not a JSON object",
+    TokenResponseError,
+    "Invalid token response: body is not a JSON object",
   );
 });
 
@@ -366,8 +365,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response does 
           body: { access_token: "at" },
         },
       }),
-    AuthServerResponseError,
-    "Invalid server response: missing token_type",
+    TokenResponseError,
+    "Invalid token response: missing token_type",
   );
 });
 
@@ -380,8 +379,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response does 
           body: { token_type: "tt" },
         },
       }),
-    AuthServerResponseError,
-    "Invalid server response: missing access_token",
+    TokenResponseError,
+    "Invalid token response: missing access_token",
   );
 });
 
@@ -397,8 +396,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's acces
           },
         },
       }),
-    AuthServerResponseError,
-    "Invalid server response: access_token is not a string",
+    TokenResponseError,
+    "Invalid token response: access_token is not a string",
   );
 });
 
@@ -415,8 +414,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's refre
           },
         },
       }),
-    AuthServerResponseError,
-    "Invalid server response: refresh_token is not a string",
+    TokenResponseError,
+    "Invalid token response: refresh_token is not a string",
   );
 });
 
@@ -433,8 +432,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's expir
           },
         },
       }),
-    AuthServerResponseError,
-    "Invalid server response: expires_in is not a number",
+    TokenResponseError,
+    "Invalid token response: expires_in is not a number",
   );
 });
 
@@ -451,8 +450,8 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's scope
           },
         },
       }),
-    AuthServerResponseError,
-    "Invalid server response: scope is not a string",
+    TokenResponseError,
+    "Invalid token response: scope is not a string",
   );
 });
 
@@ -566,15 +565,18 @@ Deno.test("AuthorizationCodeGrant.getToken uses the default request options", as
             "User-Agent": "Custom User Agent",
             "Content-Type": "application/json",
           },
-          params: { "custom-param": "value" },
+          params: { "custom-url-param": "value" },
+          body: { "custom-body-param": "value" },
         },
       },
     },
     callbackUrl: { code: "authCode" },
   });
+  const url = new URL(r.request.url);
+  assertEquals(url.searchParams.getAll("custom-url-param"), ["value"]);
   assertEquals(r.request.headers.get("Content-Type"), "application/json");
   assertEquals(r.request.headers.get("User-Agent"), "Custom User Agent");
-  assertMatch(await r.request.text(), /.*custom-param=value.*/);
+  assertMatch(await r.request.text(), /.*custom-body-param=value.*/);
 });
 
 Deno.test("AuthorizationCodeGrant.getToken uses the passed request options over the default options", async () => {
@@ -586,22 +588,26 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed request options over 
             "User-Agent": "Custom User Agent",
             "Content-Type": "application/json",
           },
-          params: { "custom-param": "value" },
+          params: { "custom-url-param": "value" },
+          body: { "custom-body-param": "value" },
         },
       },
     },
     callParameters: {
       requestOptions: {
         headers: { "Content-Type": "text/plain" },
-        params: { "custom-param": "other_value" },
+        params: { "custom-url-param": "other_value" },
+        body: { "custom-body-param": "other_value" },
       },
     },
     callbackUrl: { code: "authCode" },
   });
+  const url = new URL(r.request.url);
+  assertEquals(url.searchParams.getAll("custom-url-param"), ["other_value"]);
   assertEquals(r.request.headers.get("Content-Type"), "text/plain");
   assertEquals(r.request.headers.get("User-Agent"), "Custom User Agent");
-  assertMatch(await r.request.text(), /.*custom-param=other_value.*/);
-  assertNotMatch(await r.request.text(), /.*custom-param=value.*/);
+  assertMatch(await r.request.text(), /.*custom-body-param=other_value.*/);
+  assertNotMatch(await r.request.text(), /.*custom-body-param=value.*/);
 });
 
 Deno.test("AuthorizationCodeGrant.getToken uses the default state validator if no state or validator was given", async () => {
@@ -661,7 +667,7 @@ function getOAuth2Client(overrideConfig: Partial<OAuth2ClientConfig> = {}) {
   return new OAuth2Client({
     clientId: "clientId",
     authorizationEndpointUri: "https://auth.server/auth",
-    accessTokenUri: "https://auth.server/token",
+    tokenUri: "https://auth.server/token",
     ...overrideConfig,
   });
 }
@@ -688,6 +694,14 @@ interface AccessTokenErrorResponse {
   error: string;
   error_description?: string;
   error_uri?: string;
+}
+
+interface AccessTokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in?: number;
+  refresh_token?: string;
+  scope?: string;
 }
 
 interface MockAccessTokenResponse {

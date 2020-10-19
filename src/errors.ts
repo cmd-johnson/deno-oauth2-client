@@ -5,7 +5,8 @@ interface ErrorResponseParams {
   state?: string;
 }
 
-export class AuthError extends Error {
+/** Generic error returned by an OAuth 2.0 authorization server. */
+export class OAuth2ResponseError extends Error {
   public readonly error: string;
   public readonly errorDescription?: string;
   public readonly errorUri?: string;
@@ -44,15 +45,23 @@ export class AuthError extends Error {
       response.state = state;
     }
 
-    return new AuthError(response);
+    return new OAuth2ResponseError(response);
   }
 }
 
-export class AuthServerResponseError extends Error {
+/** Error originating from the authorization response. */
+export class AuthorizationResponseError extends Error {
+  constructor(description: string) {
+    super(`Invalid authorization response: ${description}`);
+  }
+}
+
+/** Error originating from the token response. */
+export class TokenResponseError extends Error {
   public readonly response: Response;
 
   constructor(description: string, response: Response) {
-    super(`Invalid server response: ${description}`);
+    super(`Invalid token response: ${description}`);
     this.response = response;
   }
 }

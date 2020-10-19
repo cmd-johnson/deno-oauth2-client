@@ -1,18 +1,43 @@
 import type { OAuth2Client, RequestOptions } from "./oauth2_client.ts";
-import { AuthError, AuthServerResponseError } from "./errors.ts";
+import { AuthorizationResponseError, OAuth2ResponseError, TokenResponseError } from "./errors.ts";
 
-interface GetUriOptions {
+export interface GetUriOptions {
+  /**
+   * State parameter to send along with the authorization request.
+   *
+   * see https://tools.ietf.org/html/rfc6749#section-4.1.1
+   */
   state?: string;
+  /**
+   * Scopes to request with the authorization request.
+   *
+   * If an array is passed, it is concatinated using spaces as per
+   * https://tools.ietf.org/html/rfc6749#section-3.3
+   */
   scope?: string | string[];
 }
 
 export interface GetTokenOptions {
+  /**
+   * The state parameter expected to be returned by the authorization response.
+   *
+   * Usually you'd store the state you sent with the authorization request in the
+   * user's session so you can pass it here.
+   * If it could be one of many states or you want to run some custom verification
+   * logic, use the `stateValidator` parameter instead.
+   */
   state?: string;
+  /**
+   * The state validator used to verify that the received state is valid.
+   *
+   * The option object's state value is ignored when a stateValidator is passed.
+   */
   stateValidator?: (state: string | null) => boolean;
+  /** Request options used when making the access token request. */
   requestOptions?: RequestOptions;
 }
 
-export interface AccessTokenResponse {
+interface AccessTokenResponse {
   access_token: string;
   token_type: string;
   expires_in?: number;
@@ -20,19 +45,45 @@ export interface AccessTokenResponse {
   scope?: string;
 }
 
+/** Tokens and associated information received from a successful access token request. */
 export interface Tokens {
   accessToken: string;
+  /**
+   * The type of access token received.
+   *
+   * See https://tools.ietf.org/html/rfc6749#section-7.1
+   * Should usually be "Bearer" for most OAuth 2.0 servers, but don't count on it.
+   */
   tokenType: string;
+  /** The lifetime in seconds of the access token. */
   expiresIn?: number;
+  /**
+   * The optional refresh token returned by the authorization server.
+   *
+   * Consult your OAuth 2.0 Provider's documentation to see under
+   * which circumstances you'll receive one.
+   */
   refreshToken?: string;
+  /**
+   * The scopes that were granted by the user.
+   *
+   * May be undefined if the granted scopes match the requested scopes.
+   * See https://tools.ietf.org/html/rfc6749#section-5.1
+   */
   scope?: string[];
 }
 
+/**
+ * Implements the OAuth 2.0 authorization code grant.
+ *
+ * See https://tools.ietf.org/html/rfc6749#section-4.1
+ */
 export class AuthorizationCodeGrant {
   constructor(
     private readonly client: OAuth2Client,
   ) {}
 
+  /** Builds a URI you can redirect a user to to make the authorization request. */
   public getAuthorizationUri(options: GetUriOptions = {}): URL {
     const params = new URLSearchParams();
     params.set("response_type", "code");
@@ -50,6 +101,13 @@ export class AuthorizationCodeGrant {
     return new URL(`?${params}`, this.client.config.authorizationEndpointUri);
   }
 
+  /**
+   * Parses the authorization response request tokens from the authorization server.
+   *
+   * Usually you'd want to call this method in the function that handles the user's request to your configured redirectUri.
+   * @param authResponseUri The complete URI the user got redirected to by the authorization server after making the authorization request.
+   *     Must include all received URL parameters.
+   */
   public async getToken(
     authResponseUri: string | URL,
     options: GetTokenOptions = {},
@@ -66,7 +124,7 @@ export class AuthorizationCodeGrant {
 
     const accessTokenResponse = await fetch(request);
 
-    return this.validateTokenResponse(accessTokenResponse);
+    return this.parseTokenResponse(accessTokenResponse);
   }
 
   private validateAuthorizationResponse(
@@ -80,25 +138,25 @@ export class AuthorizationCodeGrant {
         typeof url.pathname === "string" &&
         url.pathname !== expectedUrl.pathname
       ) {
-        throw new TypeError(
+        throw new AuthorizationResponseError(
           `Redirect path should match configured path, but got: ${url.pathname}`,
         );
       }
     }
 
     if (!url.search || !url.search.substr(1)) {
-      throw new TypeError(`URI does not contain callback parameters: ${url}`);
+      throw new AuthorizationResponseError(`URI does not contain callback parameters: ${url}`);
     }
 
     const params = new URLSearchParams(url.search || "");
 
     if (params.has("error")) {
-      throw AuthError.fromURLSearchParams(params);
+      throw OAuth2ResponseError.fromURLSearchParams(params);
     }
 
     const code = params.get("code") || "";
     if (!code) {
-      throw new TypeError("Missing code, unable to request token");
+      throw new AuthorizationResponseError("Missing code, unable to request token");
     }
 
     const state = params.get("state");
@@ -108,9 +166,9 @@ export class AuthorizationCodeGrant {
 
     if (stateValidator && !stateValidator(state)) {
       if (state === null) {
-        throw new TypeError("Missing state");
+        throw new AuthorizationResponseError("Missing state");
       } else {
-        throw new TypeError(`Invalid state: ${params.get("state")}`);
+        throw new AuthorizationResponseError(`Invalid state: ${params.get("state")}`);
       }
     }
 
@@ -146,17 +204,26 @@ export class AuthorizationCodeGrant {
       requestParams.client_id = this.client.config.clientId;
     }
 
-    return new Request(this.client.config.accessTokenUri, {
+    const uri = new URL(this.client.config.tokenUri);
+    const params = {
+      ...(this.client.config.defaults?.requestOptions?.params ?? {}),
+      ...(requestOptions.params ?? {}),
+    };
+    Object.keys(params).forEach(key => {
+      uri.searchParams.append(key, params[key]);
+    });
+
+    return new Request(uri.toString(), {
       method: "POST",
       headers: new Headers({
         ...headers,
-        ...(this.client.config.defaults?.requestOptions?.headers || {}),
+        ...(this.client.config.defaults?.requestOptions?.headers ?? {}),
         ...(requestOptions.headers ?? {}),
       }),
       body: new URLSearchParams({
         ...requestParams,
-        ...(this.client.config.defaults?.requestOptions?.params || {}),
-        ...(requestOptions.params ?? {}),
+        ...(this.client.config.defaults?.requestOptions?.body ?? {}),
+        ...(requestOptions.body ?? {}),
       }).toString(),
     });
   }
@@ -165,29 +232,29 @@ export class AuthorizationCodeGrant {
     return url instanceof URL ? url : new URL(url, "http://ignored");
   }
 
-  private async validateTokenResponse(response: Response): Promise<Tokens> {
+  private async parseTokenResponse(response: Response): Promise<Tokens> {
     if (!response.ok) {
-      throw await this.getError(response);
+      throw await this.getTokenResponseError(response);
     }
 
     let body: AccessTokenResponse;
     try {
       body = await response.json();
     } catch (error) {
-      throw new AuthServerResponseError(
+      throw new TokenResponseError(
         "Response is not JSON encoded",
         response,
       );
     }
 
     if (typeof body !== "object" || Array.isArray(body) || body === null) {
-      throw new AuthServerResponseError(
+      throw new TokenResponseError(
         "body is not a JSON object",
         response,
       );
     }
     if (typeof body.access_token !== "string") {
-      throw new AuthServerResponseError(
+      throw new TokenResponseError(
         body.access_token
           ? "access_token is not a string"
           : "missing access_token",
@@ -195,7 +262,7 @@ export class AuthorizationCodeGrant {
       );
     }
     if (typeof body.token_type !== "string") {
-      throw new AuthServerResponseError(
+      throw new TokenResponseError(
         body.token_type ? "token_type is not a string" : "missing token_type",
         response,
       );
@@ -204,7 +271,7 @@ export class AuthorizationCodeGrant {
       body.refresh_token !== undefined &&
       typeof body.refresh_token !== "string"
     ) {
-      throw new AuthServerResponseError(
+      throw new TokenResponseError(
         "refresh_token is not a string",
         response,
       );
@@ -212,13 +279,13 @@ export class AuthorizationCodeGrant {
     if (
       body.expires_in !== undefined && typeof body.expires_in !== "number"
     ) {
-      throw new AuthServerResponseError(
+      throw new TokenResponseError(
         "expires_in is not a number",
         response,
       );
     }
     if (body.scope !== undefined && typeof body.scope !== "string") {
-      throw new AuthServerResponseError(
+      throw new TokenResponseError(
         "scope is not a string",
         response,
       );
@@ -243,17 +310,17 @@ export class AuthorizationCodeGrant {
   }
 
   /** Tries to build an AuthError from the response and defaults to AuthServerResponseError if that fails. */
-  private async getError(
+  private async getTokenResponseError(
     response: Response,
-  ): Promise<AuthError | AuthServerResponseError> {
+  ): Promise<OAuth2ResponseError | TokenResponseError> {
     try {
       const body = await response.json();
       if (typeof body.error !== "string") {
         throw new TypeError("body should contain an error");
       }
-      return new AuthError(body);
+      return new OAuth2ResponseError(body);
     } catch {
-      return new AuthServerResponseError(
+      return new TokenResponseError(
         `Server returned ${response.status} and no error description was given`,
         response,
       );
