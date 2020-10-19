@@ -2,10 +2,14 @@ import {
   assertEquals,
   assertThrows,
 } from "https://deno.land/std@0.71.0/testing/asserts.ts";
-import { AuthError, AuthServerResponseError } from "./errors.ts";
+import {
+  AuthorizationResponseError,
+  OAuth2ResponseError,
+  TokenResponseError,
+} from "./errors.ts";
 
-Deno.test("AuthError constructor works", () => {
-  const fullError = new AuthError({
+Deno.test("OAuth2ResponseError constructor works", () => {
+  const fullError = new OAuth2ResponseError({
     error: "invalid_request",
     error_description: "test description",
     error_uri: "error://uri",
@@ -17,24 +21,24 @@ Deno.test("AuthError constructor works", () => {
   assertEquals(fullError.errorUri, "error://uri");
   assertEquals(fullError.state, "some state");
 
-  const noDescription = new AuthError({
+  const noDescription = new OAuth2ResponseError({
     error: "test error",
   });
   assertEquals(noDescription.message, "test error");
 });
 
-Deno.test("AuthError.fromURLSearchParams, URL without error parameter throws error", () => {
+Deno.test("OAuth2ResponseError.fromURLSearchParams, URL without error parameter throws error", () => {
   assertThrows(
     () => {
-      AuthError.fromURLSearchParams(new URLSearchParams());
+      OAuth2ResponseError.fromURLSearchParams(new URLSearchParams());
     },
     TypeError,
     "error URL parameter must be set",
   );
 });
 
-Deno.test("AuthError.fromURLSearchParams works when only the error parameter is set", () => {
-  const onlyError = AuthError.fromURLSearchParams(
+Deno.test("OAuth2ResponseError.fromURLSearchParams works when only the error parameter is set", () => {
+  const onlyError = OAuth2ResponseError.fromURLSearchParams(
     new URLSearchParams({
       error: "test error",
     }),
@@ -46,8 +50,8 @@ Deno.test("AuthError.fromURLSearchParams works when only the error parameter is 
   assertEquals(onlyError.message, "test error");
 });
 
-Deno.test("AuthError.fromURLSearchParams works when error and error_description are set", () => {
-  const withDescription = AuthError.fromURLSearchParams(
+Deno.test("OAuth2ResponseError.fromURLSearchParams works when error and error_description are set", () => {
+  const withDescription = OAuth2ResponseError.fromURLSearchParams(
     new URLSearchParams({
       error: "test error",
       error_description: "description",
@@ -57,8 +61,8 @@ Deno.test("AuthError.fromURLSearchParams works when error and error_description 
   assertEquals(withDescription.message, "description");
 });
 
-Deno.test("AuthError.fromURLSearchParams works when error and error_uri are set", () => {
-  const withErrorUri = AuthError.fromURLSearchParams(
+Deno.test("OAuth2ResponseError.fromURLSearchParams works when error and error_uri are set", () => {
+  const withErrorUri = OAuth2ResponseError.fromURLSearchParams(
     new URLSearchParams({
       error: "test error",
       error_uri: "error://uri",
@@ -68,8 +72,8 @@ Deno.test("AuthError.fromURLSearchParams works when error and error_uri are set"
   assertEquals(withErrorUri.message, "test error");
 });
 
-Deno.test("AuthError.fromURLSearchParams works when error and state are set", () => {
-  const withState = AuthError.fromURLSearchParams(
+Deno.test("OAuth2ResponseError.fromURLSearchParams works when error and state are set", () => {
+  const withState = OAuth2ResponseError.fromURLSearchParams(
     new URLSearchParams({
       error: "test error",
       state: "some state",
@@ -79,8 +83,8 @@ Deno.test("AuthError.fromURLSearchParams works when error and state are set", ()
   assertEquals(withState.message, "test error");
 });
 
-Deno.test("AuthError.fromURLSearchParams works when error, error_description, error_uri and state are set", () => {
-  const fullError = AuthError.fromURLSearchParams(
+Deno.test("OAuth2ResponseError.fromURLSearchParams works when error, error_description, error_uri and state are set", () => {
+  const fullError = OAuth2ResponseError.fromURLSearchParams(
     new URLSearchParams({
       error: "invalid_request",
       error_description: "test description",
@@ -95,14 +99,20 @@ Deno.test("AuthError.fromURLSearchParams works when error, error_description, er
   assertEquals(fullError.state, "some state");
 });
 
-Deno.test("AuthServerResponseError constructor works", () => {
+Deno.test("AuthorizationResponseError constructor works", () => {
+  const error = new AuthorizationResponseError("description");
+
+  assertEquals(error.message, "Invalid authorization response: description");
+});
+
+Deno.test("TokenResponseError constructor works", () => {
   const response = new Response("body", {
     headers: { "Test-Header": "is set" },
     status: 418,
     statusText: "I'm a teapot",
   });
-  const error = new AuthServerResponseError("description", response);
+  const error = new TokenResponseError("description", response);
 
-  assertEquals(error.message, "Invalid server response: description");
+  assertEquals(error.message, "Invalid token response: description");
   assertEquals(error.response, response);
 });
