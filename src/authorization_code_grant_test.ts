@@ -8,11 +8,12 @@ import {
 import { spy, stub } from "https://deno.land/x/mock@v0.7.0/mod.ts";
 
 import { OAuth2Client, OAuth2ClientConfig } from "./oauth2_client.ts";
-import type {
-  GetTokenOptions,
-  Tokens,
-} from "./authorization_code_grant.ts";
-import { AuthorizationResponseError, OAuth2ResponseError, TokenResponseError } from "./errors.ts";
+import type { GetTokenOptions, Tokens } from "./authorization_code_grant.ts";
+import {
+  AuthorizationResponseError,
+  OAuth2ResponseError,
+  TokenResponseError,
+} from "./errors.ts";
 
 //#region AuthorizationCodeGrant.getAuthorizationUri successful paths
 

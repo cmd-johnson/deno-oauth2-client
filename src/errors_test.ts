@@ -2,7 +2,11 @@ import {
   assertEquals,
   assertThrows,
 } from "https://deno.land/std@0.71.0/testing/asserts.ts";
-import { AuthorizationResponseError, OAuth2ResponseError, TokenResponseError } from "./errors.ts";
+import {
+  AuthorizationResponseError,
+  OAuth2ResponseError,
+  TokenResponseError,
+} from "./errors.ts";
 
 Deno.test("OAuth2ResponseError constructor works", () => {
   const fullError = new OAuth2ResponseError({
@@ -95,7 +99,7 @@ Deno.test("OAuth2ResponseError.fromURLSearchParams works when error, error_descr
   assertEquals(fullError.state, "some state");
 });
 
-Deno.test("AuthorizationResponseError constructor works", ()  => {
+Deno.test("AuthorizationResponseError constructor works", () => {
   const error = new AuthorizationResponseError("description");
 
   assertEquals(error.message, "Invalid authorization response: description");

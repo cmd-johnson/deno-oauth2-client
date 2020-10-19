@@ -1,5 +1,9 @@
 import type { OAuth2Client, RequestOptions } from "./oauth2_client.ts";
-import { AuthorizationResponseError, OAuth2ResponseError, TokenResponseError } from "./errors.ts";
+import {
+  AuthorizationResponseError,
+  OAuth2ResponseError,
+  TokenResponseError,
+} from "./errors.ts";
 
 export interface GetUriOptions {
   /**
@@ -145,7 +149,9 @@ export class AuthorizationCodeGrant {
     }
 
     if (!url.search || !url.search.substr(1)) {
-      throw new AuthorizationResponseError(`URI does not contain callback parameters: ${url}`);
+      throw new AuthorizationResponseError(
+        `URI does not contain callback parameters: ${url}`,
+      );
     }
 
     const params = new URLSearchParams(url.search || "");
@@ -156,7 +162,9 @@ export class AuthorizationCodeGrant {
 
     const code = params.get("code") || "";
     if (!code) {
-      throw new AuthorizationResponseError("Missing code, unable to request token");
+      throw new AuthorizationResponseError(
+        "Missing code, unable to request token",
+      );
     }
 
     const state = params.get("state");
@@ -168,7 +176,9 @@ export class AuthorizationCodeGrant {
       if (state === null) {
         throw new AuthorizationResponseError("Missing state");
       } else {
-        throw new AuthorizationResponseError(`Invalid state: ${params.get("state")}`);
+        throw new AuthorizationResponseError(
+          `Invalid state: ${params.get("state")}`,
+        );
       }
     }
 
@@ -209,7 +219,7 @@ export class AuthorizationCodeGrant {
       ...(this.client.config.defaults?.requestOptions?.params ?? {}),
       ...(requestOptions.params ?? {}),
     };
-    Object.keys(params).forEach(key => {
+    Object.keys(params).forEach((key) => {
       uri.searchParams.append(key, params[key]);
     });
 
