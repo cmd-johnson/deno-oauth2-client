@@ -7,6 +7,11 @@ export interface RefreshTokenOptions {
   requestOptions?: RequestOptions;
 }
 
+/**
+ * Implements the OAuth 2.0 refresh token grant.
+ *
+ * See https://tools.ietf.org/html/rfc6749#section-6
+ */
 export class RefreshTokenGrant extends OAuth2GrantBase {
   constructor(client: OAuth2Client) {
     super(client);
