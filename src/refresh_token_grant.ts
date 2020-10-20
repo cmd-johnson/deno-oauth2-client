@@ -12,6 +12,7 @@ export class RefreshTokenGrant extends OAuth2GrantBase {
     super(client);
   }
 
+  /** Request new tokens from the authorization server using the given refresh token. */
   async refresh(
     refreshToken: string,
     options: RefreshTokenOptions = {},
