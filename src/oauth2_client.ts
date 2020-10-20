@@ -1,13 +1,6 @@
 import { AuthorizationCodeGrant } from "./authorization_code_grant.ts";
-
-export interface RequestOptions {
-  /** Headers to set when performing outgoing HTTP requests. */
-  headers?: Record<string, string>;
-  /** URL parameters to set when performing outgoing HTTP requests. */
-  params?: Record<string, string>;
-  /** Body parameters to set when performing outgoing HTTP requests. */
-  body?: Record<string, string>;
-}
+import { RefreshTokenGrant } from "./refresh_token_grant.ts";
+import { RequestOptions } from "./types.ts";
 
 export interface OAuth2ClientConfig {
   /** The client ID provided by the authorization server. */
@@ -23,10 +16,12 @@ export interface OAuth2ClientConfig {
   tokenUri: string;
 
   defaults?: {
-    /** Default request options to use when performing outgoing HTTP requests.
+    /**
+     * Default request options to use when performing outgoing HTTP requests.
+     *
      * For example used when exchanging authorization codes for access tokens.
      */
-    requestOptions?: RequestOptions;
+    requestOptions?: Omit<RequestOptions, "method">;
     /** Default scopes to request unless otherwise specified. */
     scope?: string | string[];
     /** Default state validator to use for validating the authorization response's state value. */
@@ -41,6 +36,13 @@ export class OAuth2Client {
    * See RFC6749, section 4.1.
    */
   public code = new AuthorizationCodeGrant(this);
+
+  /**
+   * Implements the Refresh Token Grant.
+   * 
+   * See RFC6749, section 6.
+   */
+  public refreshToken = new RefreshTokenGrant(this);
 
   constructor(
     public readonly config: Readonly<OAuth2ClientConfig>,

@@ -5,15 +5,18 @@ import {
   assertNotMatch,
   assertThrowsAsync,
 } from "https://deno.land/std@0.71.0/testing/asserts.ts";
-import { spy, stub } from "https://deno.land/x/mock@v0.7.0/mod.ts";
+import { spy } from "https://deno.land/x/mock@v0.7.0/mod.ts";
 
-import { OAuth2Client, OAuth2ClientConfig } from "./oauth2_client.ts";
-import type { GetTokenOptions, Tokens } from "./authorization_code_grant.ts";
 import {
   AuthorizationResponseError,
   OAuth2ResponseError,
   TokenResponseError,
 } from "./errors.ts";
+import {
+  buildAccessTokenCallback,
+  getOAuth2Client,
+  mockATResponse,
+} from "./test_utils.ts";
 
 //#region AuthorizationCodeGrant.getAuthorizationUri successful paths
 
@@ -117,7 +120,9 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the received redirectUri do
       getOAuth2Client({
         redirectUri: "https://example.com/redirect",
       }).code.getToken(
-        buildAccessTokenCallback("https://example.com/invalid-redirect", {}),
+        buildAccessTokenCallback(
+          { baseUrl: "https://example.com/invalid-redirect" },
+        ),
       ),
     AuthorizationResponseError,
     "Redirect path should match configured path",
@@ -128,7 +133,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri does not co
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
-        buildAccessTokenCallback("https://example.com/redirect", {}),
+        buildAccessTokenCallback(),
       ),
     AuthorizationResponseError,
     "URI does not contain callback parameters",
@@ -139,10 +144,9 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri contains an
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
-        buildAccessTokenCallback(
-          "https://example.com/redirect",
-          { error: "invalid_request" },
-        ),
+        buildAccessTokenCallback({
+          params: { error: "invalid_request" },
+        }),
       ),
     OAuth2ResponseError,
     "invalid_request",
@@ -153,14 +157,13 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri contains th
   const error = await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
-        buildAccessTokenCallback(
-          "https://example.com/redirect",
-          {
+        buildAccessTokenCallback({
+          params: {
             error: "invalid_request",
             error_description: "Error description",
             error_uri: "error://uri",
           },
-        ),
+        }),
       ),
     OAuth2ResponseError,
     "Error description",
@@ -174,11 +177,10 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri doesn't con
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
-        buildAccessTokenCallback(
-          "https://example.com/redirect",
-          // state parameter has to be set or we'll get "URI does not contain callback parameters" instead
-          { state: "" },
-        ),
+        buildAccessTokenCallback({
+          // some parameter has to be set or we'll get "URI does not contain callback parameters" instead
+          params: { empty: "" } as any,
+        }),
       ),
     AuthorizationResponseError,
     "Missing code, unable to request token",
@@ -189,10 +191,9 @@ Deno.test("AuthorizationCodeGrant.getToken throws if it didn't receive a state a
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
-        buildAccessTokenCallback(
-          "https://example.com/redirect",
-          { code: "code" },
-        ),
+        buildAccessTokenCallback({
+          params: { code: "code" },
+        }),
         { stateValidator: () => false },
       ),
     AuthorizationResponseError,
@@ -204,10 +205,9 @@ Deno.test("AuthorizationCodeGrant.getToken throws if it didn't receive a state b
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
-        buildAccessTokenCallback(
-          "https://example.com/redirect",
-          { code: "code" },
-        ),
+        buildAccessTokenCallback({
+          params: { code: "code" },
+        }),
         { state: "expected_state" },
       ),
     AuthorizationResponseError,
@@ -219,10 +219,9 @@ Deno.test("AuthorizationCodeGrant.getToken throws if it received a state that do
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
-        buildAccessTokenCallback(
-          "https://example.com/redirect",
-          { code: "code", state: "invalid_state" },
-        ),
+        buildAccessTokenCallback({
+          params: { code: "code", state: "invalid_state" },
+        }),
         { state: "expected_state" },
       ),
     AuthorizationResponseError,
@@ -234,10 +233,9 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the stateValidator returns 
   await assertThrowsAsync(
     () =>
       getOAuth2Client().code.getToken(
-        buildAccessTokenCallback(
-          "https://example.com/redirect",
-          { code: "code", state: "invalid_state" },
-        ),
+        buildAccessTokenCallback({
+          params: { code: "code", state: "invalid_state" },
+        }),
         { stateValidator: () => false },
       ),
     AuthorizationResponseError,
@@ -248,16 +246,13 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the stateValidator returns 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a Content-Type other than application/json", async () => {
   await assertThrowsAsync(
     () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: {
-          status: 200,
-          headers: {
-            "Content-Type": "x-www-form-urlencoded",
-          },
-          body: "",
-        },
-      }),
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        { body: "not json" },
+      ),
     TokenResponseError,
     "Invalid token response: Response is not JSON encoded",
   );
@@ -266,13 +261,13 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a
 Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a correctly formatted error", async () => {
   await assertThrowsAsync(
     () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: {
-          status: 401,
-          body: { error: "invalid_client" },
-        },
-      }),
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        { status: 401, body: { error: "invalid_client" } },
+      ),
     OAuth2ResponseError,
     "invalid_client",
   );
@@ -281,77 +276,40 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a
 Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a 4xx or 5xx and the body doesn't contain an error parameter", async () => {
   await assertThrowsAsync(
     () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: {
-          status: 401,
-          body: {
-            no_error_property: true,
-          } as any,
-        },
-      }),
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        { status: 401, body: {} },
+      ),
     TokenResponseError,
     "Invalid token response: Server returned 401 and no error description was given",
-  );
-  await assertThrowsAsync(
-    () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: {
-          status: 503,
-          body: {} as any,
-        },
-      }),
-    TokenResponseError,
-    "Invalid token response: Server returned 503 and no error description was given",
-  );
-  await assertThrowsAsync(
-    () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: {
-          status: 418,
-        },
-      }),
-    TokenResponseError,
-    "Invalid token response: Server returned 418 and no error description was given",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server's response is not a JSON object", async () => {
   await assertThrowsAsync(
     () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: { body: '""' },
-      }),
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        { body: '""' },
+      ),
     TokenResponseError,
     "Invalid token response: body is not a JSON object",
   );
   await assertThrowsAsync(
     () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: { body: "1234" },
-      }),
-    TokenResponseError,
-    "Invalid token response: body is not a JSON object",
-  );
-  await assertThrowsAsync(
-    () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: { body: "null" },
-      }),
-    TokenResponseError,
-    "Invalid token response: body is not a JSON object",
-  );
-  await assertThrowsAsync(
-    () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: { body: `["array values?!!"]` },
-      }),
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        { body: '["array values?!!"]' },
+      ),
     TokenResponseError,
     "Invalid token response: body is not a JSON object",
   );
@@ -360,26 +318,48 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response is no
 Deno.test("AuthorizationCodeGrant.getToken throws if the server's response does not contain a token_type", async () => {
   await assertThrowsAsync(
     () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: {
-          body: { access_token: "at" },
-        },
-      }),
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        { body: { access_token: "at" } },
+      ),
     TokenResponseError,
     "Invalid token response: missing token_type",
+  );
+});
+
+Deno.test("AuthorizationCodeGrant.getToken throws if the server response's token_type is not a string", async () => {
+  await assertThrowsAsync(
+    () =>
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        {
+          body: {
+            access_token: "at",
+            token_type: 1337 as any,
+          },
+        },
+      ),
+    TokenResponseError,
+    "Invalid token response: token_type is not a string",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server's response does not contain an access_token", async () => {
   await assertThrowsAsync(
     () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: {
-          body: { token_type: "tt" },
-        },
-      }),
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        { body: { token_type: "tt" } },
+      ),
     TokenResponseError,
     "Invalid token response: missing access_token",
   );
@@ -388,15 +368,18 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response does 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server response's access_token is not a string", async () => {
   await assertThrowsAsync(
     () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: {
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        {
           body: {
             access_token: 1234 as any,
             token_type: "tt",
           },
         },
-      }),
+      ),
     TokenResponseError,
     "Invalid token response: access_token is not a string",
   );
@@ -405,16 +388,19 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's acces
 Deno.test("AuthorizationCodeGrant.getToken throws if the server response's refresh_token property is not a string", async () => {
   await assertThrowsAsync(
     () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: {
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        {
           body: {
             access_token: "at",
             token_type: "tt",
             refresh_token: 123 as any,
           },
         },
-      }),
+      ),
     TokenResponseError,
     "Invalid token response: refresh_token is not a string",
   );
@@ -423,16 +409,19 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's refre
 Deno.test("AuthorizationCodeGrant.getToken throws if the server response's expires_in property is not a number", async () => {
   await assertThrowsAsync(
     () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: {
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        {
           body: {
             access_token: "at",
             token_type: "tt",
             expires_in: { this: "is illegal" } as any,
           },
         },
-      }),
+      ),
     TokenResponseError,
     "Invalid token response: expires_in is not a number",
   );
@@ -441,16 +430,19 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's expir
 Deno.test("AuthorizationCodeGrant.getToken throws if the server response's scope property is not a string", async () => {
   await assertThrowsAsync(
     () =>
-      mockAccessTokenResponse_({
-        callbackUrl: { code: "authCode" },
-        tokenResponse: {
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        {
           body: {
             access_token: "at",
             token_type: "tt",
             scope: ["scope1", "scope2"] as any,
           },
         },
-      }),
+      ),
     TokenResponseError,
     "Invalid token response: scope is not a string",
   );
@@ -461,25 +453,31 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's scope
 //#region AuthorizationCodeGrant.getToken successful paths
 
 Deno.test("AuthorizationCodeGrant.getToken parses the minimal token response correctly", async () => {
-  const r = await mockAccessTokenResponse_({
-    callbackUrl: { code: "authCode" },
-    tokenResponse: {
+  const { result } = await mockATResponse(
+    () =>
+      getOAuth2Client().code.getToken(buildAccessTokenCallback({
+        params: { code: "authCode" },
+      })),
+    {
       body: {
         access_token: "accessToken",
         token_type: "tokenType",
       },
     },
-  });
-  assertEquals(r.result, {
+  );
+  assertEquals(result, {
     accessToken: "accessToken",
     tokenType: "tokenType",
   });
 });
 
 Deno.test("AuthorizationCodeGrant.getToken parses the full token response correctly", async () => {
-  const r = await mockAccessTokenResponse_({
-    callbackUrl: { code: "authCode" },
-    tokenResponse: {
+  const { result } = await mockATResponse(
+    () =>
+      getOAuth2Client().code.getToken(buildAccessTokenCallback({
+        params: { code: "authCode" },
+      })),
+    {
       body: {
         access_token: "accessToken",
         token_type: "tokenType",
@@ -488,8 +486,8 @@ Deno.test("AuthorizationCodeGrant.getToken parses the full token response correc
         scope: "multiple scopes",
       },
     },
-  });
-  assertEquals(r.result, {
+  );
+  assertEquals(result, {
     accessToken: "accessToken",
     tokenType: "tokenType",
     refreshToken: "refreshToken",
@@ -499,127 +497,154 @@ Deno.test("AuthorizationCodeGrant.getToken parses the full token response correc
 });
 
 Deno.test("AuthorizationCodeGrant.getToken doesn't throw if it didn't receive a state but the state validator returns true", async () => {
-  await mockAccessTokenResponse_({
-    callbackUrl: { code: "code" },
-    callParameters: { stateValidator: () => true },
-  });
+  await mockATResponse(
+    () =>
+      getOAuth2Client().code.getToken(
+        buildAccessTokenCallback({
+          params: { code: "code" },
+        }),
+        { stateValidator: () => true },
+      ),
+  );
 });
 
 Deno.test("AuthorizationCodeGrant.getToken builds a correct request to the token endpoint by default", async () => {
-  const r = await mockAccessTokenResponse_({
-    callbackUrl: { code: "authCode" },
-  });
-  assertEquals(r.request.url, "https://auth.server/token");
-  const body = await r.request.formData();
+  const { request } = await mockATResponse(
+    () =>
+      getOAuth2Client().code.getToken(buildAccessTokenCallback({
+        params: { code: "authCode" },
+      })),
+  );
+
+  assertEquals(request.url, "https://auth.server/token");
+  const body = await request.formData();
   assertEquals(body.get("grant_type"), "authorization_code");
   assertEquals(body.get("code"), "authCode");
   assertEquals(body.get("redirect_uri"), null);
   assertEquals(body.get("client_id"), "clientId");
   assertEquals(
-    r.request.headers.get("Content-Type"),
+    request.headers.get("Content-Type"),
     "application/x-www-form-urlencoded",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getToken correctly adds the redirectUri to the token request if specified", async () => {
-  const r = await mockAccessTokenResponse_({
-    clientConfig: {
-      redirectUri: "http://some.redirect/uri",
-    },
-    callbackUrl: { code: "authCode", base: "http://some.redirect/uri" },
-  });
+  const { request } = await mockATResponse(
+    () =>
+      getOAuth2Client({
+        redirectUri: "http://some.redirect/uri",
+      }).code.getToken(buildAccessTokenCallback({
+        baseUrl: "http://some.redirect/uri",
+        params: { code: "authCode" },
+      })),
+  );
   assertEquals(
-    (await r.request.formData()).get("redirect_uri"),
+    (await request.formData()).get("redirect_uri"),
     "http://some.redirect/uri",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getToken sends the clientId as form parameter if no clientSecret is set", async () => {
-  const r = await mockAccessTokenResponse_({
-    callbackUrl: { code: "authCode" },
-  });
+  const { request } = await mockATResponse(
+    () =>
+      getOAuth2Client().code.getToken(buildAccessTokenCallback({
+        params: { code: "authCode" },
+      })),
+  );
   assertEquals(
-    (await r.request.formData()).get("client_id"),
+    (await request.formData()).get("client_id"),
     "clientId",
   );
-  assertEquals(r.request.headers.get("Authorization"), null);
+  assertEquals(request.headers.get("Authorization"), null);
 });
 
 Deno.test("AuthorizationCodeGrant.getToken sends the correct Authorization header if the clientSecret is set", async () => {
-  const r = await mockAccessTokenResponse_({
-    clientConfig: { clientSecret: "super-secret" },
-    callbackUrl: { code: "authCode" },
-  });
+  const { request } = await mockATResponse(
+    () =>
+      getOAuth2Client({ clientSecret: "super-secret" }).code.getToken(
+        buildAccessTokenCallback({
+          params: { code: "authCode" },
+        }),
+      ),
+  );
   assertEquals(
-    r.request.headers.get("Authorization"),
+    request.headers.get("Authorization"),
     "Basic Y2xpZW50SWQ6c3VwZXItc2VjcmV0",
   );
-  assertEquals((await r.request.formData()).get("client_id"), null);
+  assertEquals((await request.formData()).get("client_id"), null);
 });
 
 Deno.test("AuthorizationCodeGrant.getToken uses the default request options", async () => {
-  const r = await mockAccessTokenResponse_({
-    clientConfig: {
-      defaults: {
-        requestOptions: {
-          headers: {
-            "User-Agent": "Custom User Agent",
-            "Content-Type": "application/json",
+  const { request } = await mockATResponse(
+    () =>
+      getOAuth2Client({
+        defaults: {
+          requestOptions: {
+            headers: {
+              "User-Agent": "Custom User Agent",
+              "Content-Type": "application/json",
+            },
+            urlParams: { "custom-url-param": "value" },
+            body: { "custom-body-param": "value" },
           },
-          params: { "custom-url-param": "value" },
-          body: { "custom-body-param": "value" },
         },
-      },
-    },
-    callbackUrl: { code: "authCode" },
-  });
-  const url = new URL(r.request.url);
+      }).code.getToken(buildAccessTokenCallback({
+        params: { code: "authCode" },
+      })),
+  );
+  const url = new URL(request.url);
   assertEquals(url.searchParams.getAll("custom-url-param"), ["value"]);
-  assertEquals(r.request.headers.get("Content-Type"), "application/json");
-  assertEquals(r.request.headers.get("User-Agent"), "Custom User Agent");
-  assertMatch(await r.request.text(), /.*custom-body-param=value.*/);
+  assertEquals(request.headers.get("Content-Type"), "application/json");
+  assertEquals(request.headers.get("User-Agent"), "Custom User Agent");
+  assertMatch(await request.text(), /.*custom-body-param=value.*/);
 });
 
 Deno.test("AuthorizationCodeGrant.getToken uses the passed request options over the default options", async () => {
-  const r = await mockAccessTokenResponse_({
-    clientConfig: {
-      defaults: {
-        requestOptions: {
-          headers: {
-            "User-Agent": "Custom User Agent",
-            "Content-Type": "application/json",
+  const { request } = await mockATResponse(
+    () =>
+      getOAuth2Client({
+        defaults: {
+          requestOptions: {
+            headers: {
+              "User-Agent": "Custom User Agent",
+              "Content-Type": "application/json",
+            },
+            urlParams: { "custom-url-param": "value" },
+            body: { "custom-body-param": "value" },
           },
-          params: { "custom-url-param": "value" },
-          body: { "custom-body-param": "value" },
         },
-      },
-    },
-    callParameters: {
-      requestOptions: {
-        headers: { "Content-Type": "text/plain" },
-        params: { "custom-url-param": "other_value" },
-        body: { "custom-body-param": "other_value" },
-      },
-    },
-    callbackUrl: { code: "authCode" },
-  });
-  const url = new URL(r.request.url);
+      }).code.getToken(
+        buildAccessTokenCallback({
+          params: { code: "authCode" },
+        }),
+        {
+          requestOptions: {
+            headers: { "Content-Type": "text/plain" },
+            urlParams: { "custom-url-param": "other_value" },
+            body: { "custom-body-param": "other_value" },
+          },
+        },
+      ),
+  );
+  const url = new URL(request.url);
   assertEquals(url.searchParams.getAll("custom-url-param"), ["other_value"]);
-  assertEquals(r.request.headers.get("Content-Type"), "text/plain");
-  assertEquals(r.request.headers.get("User-Agent"), "Custom User Agent");
-  assertMatch(await r.request.text(), /.*custom-body-param=other_value.*/);
-  assertNotMatch(await r.request.text(), /.*custom-body-param=value.*/);
+  assertEquals(request.headers.get("Content-Type"), "text/plain");
+  assertEquals(request.headers.get("User-Agent"), "Custom User Agent");
+  assertMatch(await request.text(), /.*custom-body-param=other_value.*/);
+  assertNotMatch(await request.text(), /.*custom-body-param=value.*/);
 });
 
 Deno.test("AuthorizationCodeGrant.getToken uses the default state validator if no state or validator was given", async () => {
   const defaultValidator = spy(() => true);
 
-  await mockAccessTokenResponse_({
-    callbackUrl: { code: "authCode", state: "some_state" },
-    clientConfig: {
-      defaults: { stateValidator: defaultValidator },
-    },
-  });
+  await mockATResponse(
+    () =>
+      getOAuth2Client({
+        defaults: { stateValidator: defaultValidator },
+      }).code.getToken(buildAccessTokenCallback({
+        params: { code: "authCode", state: "some_state" },
+      })),
+  );
 
   assertEquals(
     defaultValidator.calls,
@@ -631,13 +656,17 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over 
   const defaultValidator = spy(() => true);
   const validator = spy(() => true);
 
-  await mockAccessTokenResponse_({
-    callbackUrl: { code: "authCode", state: "some_state" },
-    clientConfig: {
-      defaults: { stateValidator: defaultValidator },
-    },
-    callParameters: { stateValidator: validator },
-  });
+  await mockATResponse(
+    () =>
+      getOAuth2Client({
+        defaults: { stateValidator: defaultValidator },
+      }).code.getToken(
+        buildAccessTokenCallback({
+          params: { code: "authCode", state: "some_state" },
+        }),
+        { stateValidator: validator },
+      ),
+  );
 
   assertEquals(defaultValidator.calls, []);
   assertEquals(validator.calls, [{ args: ["some_state"], returned: true }]);
@@ -647,13 +676,17 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over 
   const defaultValidator = spy(() => true);
   const validator = spy(() => true);
 
-  await mockAccessTokenResponse_({
-    callbackUrl: { code: "authCode", state: "some_state" },
-    clientConfig: {
-      defaults: { stateValidator: defaultValidator },
-    },
-    callParameters: { stateValidator: validator, state: "other_state" },
-  });
+  await mockATResponse(
+    () =>
+      getOAuth2Client({
+        defaults: { stateValidator: defaultValidator },
+      }).code.getToken(
+        buildAccessTokenCallback({
+          params: { code: "authCode", state: "some_state" },
+        }),
+        { stateValidator: validator, state: "other_state" },
+      ),
+  );
 
   assertEquals(defaultValidator.calls, []);
   assertEquals(validator.calls, [{ args: ["some_state"], returned: true }]);
@@ -663,15 +696,6 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over 
 //#endregion
 
 //#region Utility test functions
-
-function getOAuth2Client(overrideConfig: Partial<OAuth2ClientConfig> = {}) {
-  return new OAuth2Client({
-    clientId: "clientId",
-    authorizationEndpointUri: "https://auth.server/auth",
-    tokenUri: "https://auth.server/token",
-    ...overrideConfig,
-  });
-}
 
 function assertMatchesUrl(test: URL, expectedUrl: string | URL): void {
   const expected = expectedUrl instanceof URL
@@ -689,131 +713,6 @@ function assertMatchesUrl(test: URL, expectedUrl: string | URL): void {
     a > b ? 1 : a < b ? -1 : 0
   );
   assertEquals(testParams, expectedParams);
-}
-
-interface AccessTokenErrorResponse {
-  error: string;
-  error_description?: string;
-  error_uri?: string;
-}
-
-interface AccessTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in?: number;
-  refresh_token?: string;
-  scope?: string;
-}
-
-interface MockAccessTokenResponse {
-  status?: number;
-  headers?: { [key: string]: string };
-  body?: Partial<AccessTokenResponse | AccessTokenErrorResponse> | string;
-}
-
-interface MockAccessTokenResponseResult {
-  request: Request;
-  result: Tokens;
-}
-
-async function mockAccessTokenResponse(
-  request: () => Promise<Tokens>,
-  tokenResponse: MockAccessTokenResponse = {},
-): Promise<MockAccessTokenResponseResult> {
-  const fetchStub = stub(window, "fetch");
-  try {
-    const body = typeof tokenResponse.body === "string"
-      ? tokenResponse.body
-      : JSON.stringify(tokenResponse.body);
-
-    const headers = new Headers(
-      tokenResponse.headers || {
-        "Content-Type": "application/json",
-      },
-    );
-
-    const status = tokenResponse.status || 200;
-
-    fetchStub.returns = [
-      Promise.resolve(new Response(body, { headers, status })),
-    ];
-
-    const result = await request();
-
-    const performedRequest = fetchStub.calls[0].args[0] as Request;
-
-    return { request: performedRequest, result };
-  } finally {
-    fetchStub.restore();
-  }
-}
-
-async function mockAccessTokenResponse_(
-  options: {
-    clientConfig?: Partial<OAuth2ClientConfig>;
-    callParameters?: Partial<GetTokenOptions>;
-    callbackUrl: (AccessTokenCallbackSuccess | AccessTokenCallbackError) & {
-      base?: string;
-    };
-    tokenResponse?: MockAccessTokenResponse;
-  },
-): Promise<MockAccessTokenResponseResult> {
-  const callbackUrl = buildAccessTokenCallback(
-    options.callbackUrl.base ?? "https://example.com",
-    options.callbackUrl,
-  );
-
-  const fetchStub = stub(window, "fetch");
-  try {
-    const tokenResponse = options.tokenResponse ??
-      { body: { access_token: "at", token_type: "tt" } };
-
-    const body = typeof tokenResponse.body === "string"
-      ? tokenResponse.body
-      : JSON.stringify(tokenResponse.body);
-
-    const headers = new Headers(
-      tokenResponse.headers ?? { "Content-Type": "application/json" },
-    );
-
-    const status = tokenResponse.status ?? 200;
-
-    fetchStub.returns = [
-      Promise.resolve(new Response(body, { headers, status })),
-    ];
-
-    const result = await getOAuth2Client(options.clientConfig).code.getToken(
-      callbackUrl,
-      options.callParameters,
-    );
-
-    const request = fetchStub.calls[0].args[0] as Request;
-
-    return { request, result };
-  } finally {
-    fetchStub.restore();
-  }
-}
-
-interface AccessTokenCallbackSuccess {
-  code?: string;
-  state?: string;
-}
-interface AccessTokenCallbackError {
-  error?: string;
-  error_description?: string;
-  error_uri?: string;
-  state?: string;
-}
-
-function buildAccessTokenCallback(
-  base: string,
-  options: AccessTokenCallbackSuccess | AccessTokenCallbackError,
-): URL {
-  return new URL(
-    `?${new URLSearchParams(options as Record<string, string>)}`,
-    base,
-  );
 }
 
 //#endregion
