@@ -1,9 +1,7 @@
-import type { OAuth2Client, RequestOptions } from "./oauth2_client.ts";
-import {
-  AuthorizationResponseError,
-  OAuth2ResponseError,
-  TokenResponseError,
-} from "./errors.ts";
+import type { OAuth2Client } from "./oauth2_client.ts";
+import { AuthorizationResponseError, OAuth2ResponseError } from "./errors.ts";
+import { RequestOptions, Tokens } from "./types.ts";
+import { OAuth2GrantBase } from "./grant_base.ts";
 
 export interface GetUriOptions {
   /**
@@ -41,51 +39,15 @@ export interface GetTokenOptions {
   requestOptions?: RequestOptions;
 }
 
-interface AccessTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in?: number;
-  refresh_token?: string;
-  scope?: string;
-}
-
-/** Tokens and associated information received from a successful access token request. */
-export interface Tokens {
-  accessToken: string;
-  /**
-   * The type of access token received.
-   *
-   * See https://tools.ietf.org/html/rfc6749#section-7.1
-   * Should usually be "Bearer" for most OAuth 2.0 servers, but don't count on it.
-   */
-  tokenType: string;
-  /** The lifetime in seconds of the access token. */
-  expiresIn?: number;
-  /**
-   * The optional refresh token returned by the authorization server.
-   *
-   * Consult your OAuth 2.0 Provider's documentation to see under
-   * which circumstances you'll receive one.
-   */
-  refreshToken?: string;
-  /**
-   * The scopes that were granted by the user.
-   *
-   * May be undefined if the granted scopes match the requested scopes.
-   * See https://tools.ietf.org/html/rfc6749#section-5.1
-   */
-  scope?: string[];
-}
-
 /**
  * Implements the OAuth 2.0 authorization code grant.
  *
  * See https://tools.ietf.org/html/rfc6749#section-4.1
  */
-export class AuthorizationCodeGrant {
-  constructor(
-    private readonly client: OAuth2Client,
-  ) {}
+export class AuthorizationCodeGrant extends OAuth2GrantBase {
+  constructor(client: OAuth2Client) {
+    super(client);
+  }
 
   /** Builds a URI you can redirect a user to to make the authorization request. */
   public getAuthorizationUri(options: GetUriOptions = {}): URL {
@@ -156,7 +118,7 @@ export class AuthorizationCodeGrant {
 
     const params = new URLSearchParams(url.search || "");
 
-    if (params.has("error")) {
+    if (params.get("error") !== null) {
       throw OAuth2ResponseError.fromURLSearchParams(params);
     }
 
@@ -192,17 +154,16 @@ export class AuthorizationCodeGrant {
     code: string,
     requestOptions: RequestOptions = {},
   ): Request {
-    const requestParams: { [key: string]: string } = {
+    const body: Record<string, string> = {
       grant_type: "authorization_code",
       code,
     };
-    const headers: { [k: string]: string } = {
-      "Content-Type": "application/x-www-form-urlencoded",
+    const headers: Record<string, string> = {
       "Accept": "application/json",
     };
 
     if (typeof this.client.config.redirectUri === "string") {
-      requestParams.redirect_uri = this.client.config.redirectUri;
+      body.redirect_uri = this.client.config.redirectUri;
     }
 
     if (typeof this.client.config.clientSecret === "string") {
@@ -211,129 +172,13 @@ export class AuthorizationCodeGrant {
       headers.Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
     } else {
       // This appears to be a public client, include the client ID along in the body
-      requestParams.client_id = this.client.config.clientId;
+      body.client_id = this.client.config.clientId;
     }
 
-    const uri = new URL(this.client.config.tokenUri);
-    const params = {
-      ...(this.client.config.defaults?.requestOptions?.params ?? {}),
-      ...(requestOptions.params ?? {}),
-    };
-    Object.keys(params).forEach((key) => {
-      uri.searchParams.append(key, params[key]);
-    });
-
-    return new Request(uri.toString(), {
+    return this.buildRequest(this.client.config.tokenUri, {
       method: "POST",
-      headers: new Headers({
-        ...headers,
-        ...(this.client.config.defaults?.requestOptions?.headers ?? {}),
-        ...(requestOptions.headers ?? {}),
-      }),
-      body: new URLSearchParams({
-        ...requestParams,
-        ...(this.client.config.defaults?.requestOptions?.body ?? {}),
-        ...(requestOptions.body ?? {}),
-      }).toString(),
-    });
-  }
-
-  private toUrl(url: string | URL): URL {
-    return url instanceof URL ? url : new URL(url, "http://ignored");
-  }
-
-  private async parseTokenResponse(response: Response): Promise<Tokens> {
-    if (!response.ok) {
-      throw await this.getTokenResponseError(response);
-    }
-
-    let body: AccessTokenResponse;
-    try {
-      body = await response.json();
-    } catch (error) {
-      throw new TokenResponseError(
-        "Response is not JSON encoded",
-        response,
-      );
-    }
-
-    if (typeof body !== "object" || Array.isArray(body) || body === null) {
-      throw new TokenResponseError(
-        "body is not a JSON object",
-        response,
-      );
-    }
-    if (typeof body.access_token !== "string") {
-      throw new TokenResponseError(
-        body.access_token
-          ? "access_token is not a string"
-          : "missing access_token",
-        response,
-      );
-    }
-    if (typeof body.token_type !== "string") {
-      throw new TokenResponseError(
-        body.token_type ? "token_type is not a string" : "missing token_type",
-        response,
-      );
-    }
-    if (
-      body.refresh_token !== undefined &&
-      typeof body.refresh_token !== "string"
-    ) {
-      throw new TokenResponseError(
-        "refresh_token is not a string",
-        response,
-      );
-    }
-    if (
-      body.expires_in !== undefined && typeof body.expires_in !== "number"
-    ) {
-      throw new TokenResponseError(
-        "expires_in is not a number",
-        response,
-      );
-    }
-    if (body.scope !== undefined && typeof body.scope !== "string") {
-      throw new TokenResponseError(
-        "scope is not a string",
-        response,
-      );
-    }
-
-    const tokens: Tokens = {
-      accessToken: body.access_token,
-      tokenType: body.token_type,
-    };
-
-    if (body.refresh_token) {
-      tokens.refreshToken = body.refresh_token;
-    }
-    if (body.expires_in) {
-      tokens.expiresIn = body.expires_in;
-    }
-    if (body.scope) {
-      tokens.scope = body.scope.split(" ");
-    }
-
-    return tokens;
-  }
-
-  /** Tries to build an AuthError from the response and defaults to AuthServerResponseError if that fails. */
-  private async getTokenResponseError(
-    response: Response,
-  ): Promise<OAuth2ResponseError | TokenResponseError> {
-    try {
-      const body = await response.json();
-      if (typeof body.error !== "string") {
-        throw new TypeError("body should contain an error");
-      }
-      return new OAuth2ResponseError(body);
-    } catch {
-      return new TokenResponseError(
-        `Server returned ${response.status} and no error description was given`,
-        response,
-      );
-    }
+      headers,
+      body,
+    }, requestOptions);
   }
 }
