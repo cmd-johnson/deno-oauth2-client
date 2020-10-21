@@ -21,7 +21,7 @@ const oauth2Client = new OAuth2Client({
   clientId: "<your client id>",
   clientSecret: "<your client secret>",
   authorizationEndpointUri: "https://github.com/login/oauth/authorize",
-  accessTokenUri: "https://github.com/login/oauth/access_token",
+  tokenUri: "https://github.com/login/oauth/access_token",
   redirectUri: "http://localhost:8000/oauth2/callback",
   defaults: {
     scope: "read:user",
