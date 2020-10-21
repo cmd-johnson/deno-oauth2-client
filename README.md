@@ -12,6 +12,10 @@ As such, it
 - can be used with Deno's [http module](https://deno.land/std@0.71.0/http) or any other library for handling http requests, like [oak](https://deno.land/x/oak)
 - only implements OAuth 2.0 grants, letting you take care of storing and retrieving sessions, managing state parameters, etc.
 
+Currently supported OAuth 2.0 grants:
+- Authorization Code Grant (for clients with and without client secrets)
+- Refresh Tokens
+
 ## Usage
 
 ### GitHub API example using [oak](https://deno.land/x/oak)
