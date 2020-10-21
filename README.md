@@ -1,5 +1,8 @@
 # OAuth2 Client for Deno
 
+![Tests](https://github.com/cmd-johnson/deno-oauth2-client/workflows/Tests/badge.svg)
+[![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/raw.githubusercontent.com/cmd-johnson/deno-oauth2-client/master/mod.ts)
+
 Minimalistic OAuth 2.0 client for Deno.
 Inspired by [js-client-oauth2](https://github.com/mulesoft/js-client-oauth2/).
 
