@@ -13,7 +13,7 @@ export interface OAuth2ClientConfig {
   /** The URI of the authorization server's authorization endpoint. */
   authorizationEndpointUri: string;
   /** The URI of the authorization server's token endpoint. */
-  tokenUri: string;
+  tokenEndpointUri: string;
 
   defaults?: {
     /**

@@ -1,6 +1,6 @@
 export type { RequestOptions, Tokens } from "./src/types.ts";
 
-export type {
+export {
   AuthorizationResponseError,
   OAuth2ResponseError,
   TokenResponseError,
@@ -13,6 +13,9 @@ export type {
   AuthorizationCodeGrant,
   GetTokenOptions,
   GetUriOptions,
+  StateLookupSuccess,
+  StateLookupFailure,
+  StateLookupResult,
 } from "./src/authorization_code_grant.ts";
 export type {
   RefreshTokenGrant,

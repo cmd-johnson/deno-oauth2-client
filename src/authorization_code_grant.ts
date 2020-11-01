@@ -1,6 +1,6 @@
 import type { OAuth2Client } from "./oauth2_client.ts";
 import { AuthorizationResponseError, OAuth2ResponseError } from "./errors.ts";
-import { RequestOptions, Tokens } from "./types.ts";
+import { RequestOptions, TokenResponse, Tokens } from "./types.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";
 
 export interface GetUriOptions {
@@ -19,7 +19,16 @@ export interface GetUriOptions {
   scope?: string | string[];
 }
 
-export interface GetTokenOptions {
+export interface StateLookupSuccess<T> {
+  valid: true;
+  data: T;
+}
+export interface StateLookupFailure {
+  valid: false;
+}
+export type StateLookupResult<T> = StateLookupSuccess<T> | StateLookupFailure;
+
+export interface GetTokenOptions<T> {
   /**
    * The state parameter expected to be returned by the authorization response.
    *
@@ -28,13 +37,14 @@ export interface GetTokenOptions {
    * If it could be one of many states or you want to run some custom verification
    * logic, use the `stateValidator` parameter instead.
    */
-  state?: string;
+  expectedState?: string;
   /**
    * The state validator used to verify that the received state is valid.
    *
    * The option object's state value is ignored when a stateValidator is passed.
    */
-  stateValidator?: (state: string | null) => boolean;
+  // stateValidator?: (state: string | null) => boolean;
+  stateLookup?: (state: string | null) => Promise<StateLookupResult<T>> | StateLookupResult<T>;
   /** Request options used when making the access token request. */
   requestOptions?: RequestOptions;
 }
@@ -74,11 +84,11 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
    * @param authResponseUri The complete URI the user got redirected to by the authorization server after making the authorization request.
    *     Must include all received URL parameters.
    */
-  public async getToken(
+  public async getToken<T = never>(
     authResponseUri: string | URL,
-    options: GetTokenOptions = {},
-  ): Promise<Tokens> {
-    const validated = this.validateAuthorizationResponse(
+    options: GetTokenOptions<T> = {},
+  ): Promise<TokenResponse<T>> {
+    const validated = await this.validateAuthorizationResponse(
       this.toUrl(authResponseUri),
       options,
     );
@@ -90,13 +100,16 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
 
     const accessTokenResponse = await fetch(request);
 
-    return this.parseTokenResponse(accessTokenResponse);
+    return {
+      tokens: await this.parseTokenResponse(accessTokenResponse),
+      stateLookupData: validated.stateLookupData,
+    };
   }
 
-  private validateAuthorizationResponse(
+  private async validateAuthorizationResponse<T>(
     url: URL,
-    options: GetTokenOptions,
-  ): { code: string; state?: string } {
+    options: GetTokenOptions<T>,
+  ): Promise<{ code: string; state?: string, stateLookupData?: T }> {
     if (typeof this.client.config.redirectUri === "string") {
       const expectedUrl = new URL(this.client.config.redirectUri);
 
@@ -128,26 +141,35 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
         "Missing code, unable to request token",
       );
     }
-
+    
     const state = params.get("state");
-    const stateValidator = options.stateValidator ??
-      (options.state && ((s) => s === options.state)) ??
-      this.client.config.defaults?.stateValidator;
-
-    if (stateValidator && !stateValidator(state)) {
-      if (state === null) {
-        throw new AuthorizationResponseError("Missing state");
-      } else {
+    if (options.stateLookup) {
+      const result = await options.stateLookup(state);
+      if (!result.valid) {
         throw new AuthorizationResponseError(
           `Invalid state: ${params.get("state")}`,
         );
       }
+      return {
+        code,
+        state: state ?? undefined,
+        stateLookupData: result.data,
+      };
+    } else if (options.expectedState) {
+      if (state !== options.expectedState) {
+        if (state === null) {
+          throw new AuthorizationResponseError("Missing state");
+        } else {
+          throw new AuthorizationResponseError(
+            `Invalid state: ${params.get("state")}`,
+          );
+        }
+      }
     }
-
-    if (state) {
-      return { code, state };
-    }
-    return { code };
+    return {
+      code,
+      state: state ?? undefined,
+    };
   }
 
   private buildAccessTokenRequest(
@@ -175,7 +197,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
       body.client_id = this.client.config.clientId;
     }
 
-    return this.buildRequest(this.client.config.tokenUri, {
+    return this.buildRequest(this.client.config.tokenEndpointUri, {
       method: "POST",
       headers,
       body,

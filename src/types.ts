@@ -47,3 +47,8 @@ export interface Tokens {
    */
   scope?: string[];
 }
+
+export interface TokenResponse<T> {
+  tokens: Tokens;
+  stateLookupData?: T;
+}

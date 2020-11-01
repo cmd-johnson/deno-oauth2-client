@@ -42,7 +42,7 @@ export class RefreshTokenGrant extends OAuth2GrantBase {
       headers.Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
     }
 
-    const req = this.buildRequest(this.client.config.tokenUri, {
+    const req = this.buildRequest(this.client.config.tokenEndpointUri, {
       method: "POST",
       body,
       headers,
