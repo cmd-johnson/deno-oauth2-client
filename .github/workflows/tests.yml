@@ -29,7 +29,10 @@ jobs:
           deno-version: ${{ matrix.deno }} # tests across multiple Deno versions
 
       - name: Run Tests
-        run: deno test -A --coverage --unstable
+        run: deno test -A --coverage=cov_profile --unstable
+
+      - name: Print Coverage
+        run: deno coverage cov_profile
 
   lint:
     strategy:
