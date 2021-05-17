@@ -130,8 +130,8 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     }
 
     const state = params.get("state");
-    const stateValidator = options.stateValidator ??
-      (options.state && ((s) => s === options.state)) ??
+    const stateValidator = options.stateValidator ||
+      (options.state && ((s) => s === options.state)) ||
       this.client.config.defaults?.stateValidator;
 
     if (stateValidator && !stateValidator(state)) {
