@@ -3,10 +3,10 @@ import { OAuth2Client } from "./oauth2_client.ts";
 import { RequestOptions, Tokens } from "./types.ts";
 
 interface AccessTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in?: number;
-  refresh_token?: string;
+  "access_token": string;
+  "token_type": string;
+  "expires_in"?: number;
+  "refresh_token"?: string;
   scope?: string;
 }
 
@@ -52,11 +52,11 @@ export abstract class OAuth2GrantBase {
         ...(options.headers ?? {}),
         ...(overrideOptions.headers ?? {}),
       }),
-      body: new URLSearchParams({
+      body: method !== 'HEAD' && method !== 'GET' && new URLSearchParams({
         ...(clientDefaults?.body ?? {}),
         ...(options.body ?? {}),
         ...(overrideOptions.body ?? {}),
-      }).toString(),
+      }).toString() || undefined,
     });
   }
 
@@ -75,7 +75,7 @@ export abstract class OAuth2GrantBase {
     let body: AccessTokenResponse;
     try {
       body = await response.json();
-    } catch (error) {
+    } catch {
       throw new TokenResponseError(
         "Response is not JSON encoded",
         response,

@@ -155,7 +155,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     requestOptions: RequestOptions = {},
   ): Request {
     const body: Record<string, string> = {
-      grant_type: "authorization_code",
+      "grant_type": "authorization_code",
       code,
     };
     const headers: Record<string, string> = {

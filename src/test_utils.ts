@@ -1,5 +1,4 @@
-import { stub } from "https://deno.land/x/mock@v0.7.0/mod.ts";
-import { GetTokenOptions } from "./authorization_code_grant.ts";
+import { stub } from "https://deno.land/x/mock@v0.9.5/mod.ts";
 import { OAuth2Client, OAuth2ClientConfig } from "./oauth2_client.ts";
 import { Tokens } from "./types.ts";
 
@@ -21,22 +20,22 @@ export interface AccessTokenCallbackSuccess {
 
 export interface AccessTokenCallbackError {
   error?: string;
-  error_description?: string;
-  error_uri?: string;
+  "error_description"?: string;
+  "error_uri"?: string;
   state?: string;
 }
 
 interface AccessTokenErrorResponse {
   error: string;
-  error_description?: string;
-  error_uri?: string;
+  "error_description"?: string;
+  "error_uri"?: string;
 }
 
 interface AccessTokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in?: number;
-  refresh_token?: string;
+  "access_token": string;
+  "token_type": string;
+  "expires_in"?: number;
+  "refresh_token"?: string;
   scope?: string;
 }
 

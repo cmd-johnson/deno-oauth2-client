@@ -23,8 +23,8 @@ export class RefreshTokenGrant extends OAuth2GrantBase {
     options: RefreshTokenOptions = {},
   ): Promise<Tokens> {
     const body: Record<string, string> = {
-      grant_type: "refresh_token",
-      refresh_token: refreshToken,
+      "grant_type": "refresh_token",
+      "refresh_token": refreshToken,
     };
 
     if (typeof (options?.scope) === "string") {

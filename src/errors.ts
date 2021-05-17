@@ -1,7 +1,7 @@
 interface ErrorResponseParams {
   error: string;
-  error_description?: string;
-  error_uri?: string;
+  "error_description"?: string;
+  "error_uri"?: string;
   state?: string;
 }
 

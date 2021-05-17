@@ -1,13 +1,10 @@
 import {
   assertEquals,
-  assertStrictEquals,
-  assertThrowsAsync,
 } from "https://deno.land/std@0.71.0/testing/asserts.ts";
 
 import { OAuth2Client, OAuth2ClientConfig } from "./oauth2_client.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";
-import { RequestOptions, Tokens } from "./types.ts";
-import { TokenResponseError } from "./errors.ts";
+import { RequestOptions } from "./types.ts";
 
 class OAuth2Grant extends OAuth2GrantBase {
   public buildRequest(

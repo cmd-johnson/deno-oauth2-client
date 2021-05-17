@@ -5,7 +5,7 @@ import {
   assertNotMatch,
   assertThrowsAsync,
 } from "https://deno.land/std@0.71.0/testing/asserts.ts";
-import { spy } from "https://deno.land/x/mock@v0.7.0/mod.ts";
+import { spy } from "https://deno.land/x/mock@v0.9.5/mod.ts";
 
 import {
   AuthorizationResponseError,
@@ -630,8 +630,10 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed request options over 
   assertEquals(url.searchParams.getAll("custom-url-param"), ["other_value"]);
   assertEquals(request.headers.get("Content-Type"), "text/plain");
   assertEquals(request.headers.get("User-Agent"), "Custom User Agent");
-  assertMatch(await request.text(), /.*custom-body-param=other_value.*/);
-  assertNotMatch(await request.text(), /.*custom-body-param=value.*/);
+
+  const requestText = await request.text()
+  assertMatch(requestText, /.*custom-body-param=other_value.*/);
+  assertNotMatch(requestText, /.*custom-body-param=value.*/);
 });
 
 Deno.test("AuthorizationCodeGrant.getToken uses the default state validator if no state or validator was given", async () => {
