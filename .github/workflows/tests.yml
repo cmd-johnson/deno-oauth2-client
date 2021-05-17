@@ -51,3 +51,24 @@ jobs:
 
       - name: Run lint
         run: deno lint --unstable
+
+  validateBundle:
+    strategy:
+      matrix:
+        deno: ["v1.x", "nightly"]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v2
+
+      - name: Setup Deno
+        uses: denolib/setup-deno@master
+        with:
+          deno-version: ${{ matrix.deno }}
+
+      - name: Bundle code
+        run: deno bundle mod.ts > mod.bundle.js
+
+      - name: Try running the bundled code
+        run: deno run ./mod.bundle.js
