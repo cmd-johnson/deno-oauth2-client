@@ -57,6 +57,9 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     if (typeof this.client.config.redirectUri === "string") {
       params.set("redirect_uri", this.client.config.redirectUri);
     }
+    if (typeof this.client.config.includeGrantedScopes === "boolean") {
+      params.set("include_granted_scopes", this.client.config.includeGrantedScopes);
+    }
     const scope = options.scope ?? this.client.config.defaults?.scope;
     if (scope) {
       params.set("scope", Array.isArray(scope) ? scope.join(" ") : scope);
