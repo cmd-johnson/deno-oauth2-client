@@ -15,6 +15,7 @@ As such, it
 Currently supported OAuth 2.0 grants:
 - Authorization Code Grant (for clients with and without client secrets)
 - Refresh Tokens
+- ID Token
 
 ## Usage
 
