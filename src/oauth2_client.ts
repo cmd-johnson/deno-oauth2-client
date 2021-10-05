@@ -14,6 +14,11 @@ export interface OAuth2ClientConfig {
   authorizationEndpointUri: string;
   /** The URI of the authorization server's token endpoint. */
   tokenUri: string;
+  
+  /** To enable applications to use incremental authorization to request access to additional scopes in context. 
+  If you set this parameter's value to true and the authorization request is granted, 
+  then the new access token will also cover any scopes to which the user previously granted the application access. */
+  includeGrantedScopes?: boolean;
 
   defaults?: {
     /**
