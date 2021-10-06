@@ -87,7 +87,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     const headers = this.client.config.defaults?.requestOptions?.headers?;
     if (headers) {
       params.set("Content-Type", Array.isArray(scope) ? scope.join(" ") : scope);
-    }
+    };
 
     return new URL(`?${params}`, this.client.config.authorizationEndpointUri);
   }
