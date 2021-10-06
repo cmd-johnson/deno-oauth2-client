@@ -20,8 +20,12 @@ export class ResourceGrant extends OAuth2GrantBase {
         const resourceUrl: string = this.client.config.resourceEndpointHost + resourcePath
         const request = this.buildRequest(resourceUrl, {
             method,
-            headers,
+            headers
         }, requestOptions);
-    return await fetch(request)
+        console.log(request)
+        const response = await fetch(request);
+        console.log(response)
+
+    return response
     }
 }
