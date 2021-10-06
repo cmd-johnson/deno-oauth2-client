@@ -1,7 +1,7 @@
 import type { OAuth2Client } from "./oauth2_client.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";
 import { HttpVerb, RequestOptions } from "./types.ts";
-  
+import { ResourceResponseError } from "./errors.ts";
 
 export class ResourceGrant extends OAuth2GrantBase {
     constructor(client: OAuth2Client) {
@@ -22,10 +22,12 @@ export class ResourceGrant extends OAuth2GrantBase {
             method,
             headers
         }, requestOptions);
-        console.log(request)
         const response = await fetch(request);
-        console.log(response)
 
+        if (!response.ok) {
+         throw new ResourceResponseError(`Response Error from ${resourceUrl}`, response)
+        }
+        
     return response
     }
 }
