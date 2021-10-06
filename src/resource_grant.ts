@@ -12,7 +12,7 @@ export class ResourceGrant extends OAuth2GrantBase {
     method: HttpVerb,
     resourcePath: string,
     token: string,
-    requestOptions?: RequestOptions): Promise<Response> {
+    requestOptions?: RequestOptions): Promise<Response|undefined> {
         const headers: Record<string, string> = {
             "Authorization": `Bearer ${token}`,
             "content-type": "application/json",
@@ -31,6 +31,7 @@ export class ResourceGrant extends OAuth2GrantBase {
             return response
         } catch (error) {
             console.log(error)
+            return undefined
         }
 
 
