@@ -47,7 +47,7 @@ export abstract class OAuth2GrantBase {
       method,
       headers: new Headers({
         ...(clientDefaults?.headers ?? {}),
-        ...(options.headers ?? {"Content-Type": "application/x-www-form-urlencoded"}),
+        ...(options.headers ?? {}),
         ...(overrideOptions.headers ?? {}),
       }),
       body: method !== 'HEAD' && method !== 'GET' && new URLSearchParams({

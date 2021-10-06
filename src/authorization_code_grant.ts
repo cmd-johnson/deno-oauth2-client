@@ -84,7 +84,6 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     if (scope) {
       params.set("scope", Array.isArray(scope) ? scope.join(" ") : scope);
     }
-
     return new URL(`?${params}`, this.client.config.authorizationEndpointUri);
   }
 
@@ -181,6 +180,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     };
     const headers: Record<string, string> = {
       "Accept": "application/json",
+      "content-type": "application/x-www-form-urlencoded",
     };
 
     if (typeof this.client.config.redirectUri === "string") {
