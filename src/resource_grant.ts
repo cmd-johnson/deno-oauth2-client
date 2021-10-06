@@ -22,12 +22,14 @@ export class ResourceGrant extends OAuth2GrantBase {
             method,
             headers
         }, requestOptions);
-        const response = await fetch(request);
 
-        if (!response.ok) {
-         throw new ResourceResponseError(`Response Error from ${resourceUrl}`, response)
+        try {
+            const response = await fetch(request);
+            return response
+        } catch (error) {
+            throw new ResourceResponseError(`Response Error from ${resourceUrl}`, error)
         }
-        
-    return response
+
+
     }
 }
