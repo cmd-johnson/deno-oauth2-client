@@ -1,6 +1,7 @@
 import { AuthorizationCodeGrant } from "./authorization_code_grant.ts";
 import { RefreshTokenGrant } from "./refresh_token_grant.ts";
 import { RequestOptions } from "./types.ts";
+import { ResourceGrant } from "./resource_grant.ts"
 
 export interface OAuth2ClientConfig {
   /** The client ID provided by the authorization server. */
@@ -18,6 +19,9 @@ export interface OAuth2ClientConfig {
 
   /** The URI of the authorization server's token endpoint. */
   tokenUri: string;
+
+  /** The base URI of the resource server. */
+  resourceEndpointHost?: string;
 
   /** To enable applications to use incremental authorization to request access to additional scopes in context.
    * If you set this parameter's value to true and the authorization request is granted, 
@@ -64,6 +68,11 @@ export class OAuth2Client {
    * See RFC6749, section 4.1.
    */
   public code = new AuthorizationCodeGrant(this);
+
+  /**
+   * Access resources from resource server.
+   */
+  public resource = new ResourceGrant(this);
 
   /**
    * Implements the Refresh Token Grant.
