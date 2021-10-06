@@ -26,7 +26,7 @@ export class ResourceGrant extends OAuth2GrantBase {
         try {
             const response = await fetch(request);
             if (!response.ok) {
-                console.log(new ResourceResponseError(`Response Error from ${resourceUrl}`, response);
+                console.log(new ResourceResponseError(resourceUrl, response))
             } else {
                 console.log(response.status)
             }
