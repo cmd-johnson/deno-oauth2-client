@@ -12,7 +12,7 @@ export class ResourceGrant extends OAuth2GrantBase {
     method: HttpVerb,
     resourcePath: string,
     token: string,
-    requestOptions?: RequestOptions): Promise<Response | null> {
+    requestOptions?: RequestOptions) {
         const headers: Record<string, string> = {
             "Authorization": `Bearer ${token}`,
             "content-type": "application/json",
@@ -25,12 +25,12 @@ export class ResourceGrant extends OAuth2GrantBase {
 
         try {
             const response = await fetch(request);
-            if (!response.ok) {
-                throw new ResourceResponseError(`Response Error from ${resourceUrl}`, response)
-            }
+            if (!response.ok) throw new ResourceResponseError(`Response Error from ${resourceUrl}`, response)
             return response
         } catch (e) {
-            throw new ResourceResponseError(`Response Error from ${resourceUrl}. Please check your server request, method: ${method}, resourcePath: ${resourcePath}, tokenLength: ${token.length}`, e)
+            console.log(`Response Error from ${resourceUrl}. Please check your server request, method: ${method}, resourcePath: ${resourcePath}, tokenLength: ${token.length}`, )
+            console.log(e)
+            return null
         }
 
 
