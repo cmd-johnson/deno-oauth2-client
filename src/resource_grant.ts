@@ -29,8 +29,9 @@ export class ResourceGrant extends OAuth2GrantBase {
                 throw new ResourceResponseError(`Response Error from ${resourceUrl}`, response)
             }
             return response
-        } catch (error) {
-            console.log(error)
+        } catch (e) {
+            console.log(`Response Error from ${resourceUrl}. Please check your server request, method: ${method}, resourcePath: ${resourcePath}, tokenLength: ${token.length}`)
+            console.log(e)
             return null
         }
 
