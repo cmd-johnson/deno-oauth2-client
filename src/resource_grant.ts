@@ -17,7 +17,9 @@ export class ResourceGrant extends OAuth2GrantBase {
             "Authorization": `Bearer ${token}`,
             "content-type": "application/json",
         };
-        const resourceUrl: string = this.client.config.resourceEndpointHost + resourcePath
+        const resourceUrl: string = this.client.config.resourceEndpointHost.startWith('http') ? 
+            this.client.config.resourceEndpointHost : 
+            this.client.config.resourceEndpointHost + resourcePath
         const request = this.buildRequest(resourceUrl, {
             method,
             headers
