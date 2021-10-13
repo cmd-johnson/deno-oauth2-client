@@ -15,6 +15,8 @@ As such, it
 Currently supported OAuth 2.0 grants:
 - Authorization Code Grant (for clients with and without client secrets)
 - Refresh Tokens
+- ID Token
+- Fetch resources from API Endpoint
 
 ## Usage
 
@@ -29,6 +31,7 @@ const oauth2Client = new OAuth2Client({
   clientSecret: "<your client secret>",
   authorizationEndpointUri: "https://github.com/login/oauth/authorize",
   tokenUri: "https://github.com/login/oauth/access_token",
+  resourceEndpointHost: "https://api.github.com",
   redirectUri: "http://localhost:8000/oauth2/callback",
   defaults: {
     scope: "read:user",
@@ -46,11 +49,7 @@ router.get("/oauth2/callback", async (ctx) => {
   const tokens = await oauth2Client.code.getToken(ctx.request.url);
 
   // Use the access token to make an authenticated API request
-  const userResponse = await fetch("https://api.github.com/user", {
-    headers: {
-      Authorization: `Bearer ${tokens.accessToken}`,
-    },
-  });
+  const userResponse = await fetch("GET", "/user",tokens.accessToken);
   const { name } = await userResponse.json();
 
   ctx.response.body = `Hello, ${name}!`;

@@ -40,6 +40,14 @@ export interface Tokens {
    */
   refreshToken?: string;
   /**
+   * The optional ID token returned by the authorization server.
+   * ID tokens are used in token-based authentication to cache user profile information and provide it to a client application, 
+   * thereby providing better performance and experience. 
+   * The application receives an ID token after a user successfully authenticates, 
+   * then consumes the ID token and extracts user information from it, which it can then use to personalize the user's experience.
+   */
+  idToken?: string;
+  /**
    * The scopes that were granted by the user.
    *
    * May be undefined if the granted scopes match the requested scopes.

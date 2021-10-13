@@ -65,3 +65,12 @@ export class TokenResponseError extends Error {
     this.response = response;
   }
 }
+
+export class ResourceResponseError extends Error {
+  public readonly response: Response;
+
+  constructor(description: string, response: Response) {
+    super(`Invalid resource server response: ${description}`);
+    this.response = response;
+  }
+}

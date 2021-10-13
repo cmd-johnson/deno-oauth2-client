@@ -52,17 +52,37 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
   /** Builds a URI you can redirect a user to to make the authorization request. */
   public getAuthorizationUri(options: GetUriOptions = {}): URL {
     const params = new URLSearchParams();
-    params.set("response_type", "code");
     params.set("client_id", this.client.config.clientId);
+    if (typeof this.client.config.responseType === "string") {
+      params.set("response_type", this.client.config.responseType);
+    } else {
+      params.set("response_type", "code");
+    }
     if (typeof this.client.config.redirectUri === "string") {
       params.set("redirect_uri", this.client.config.redirectUri);
+    }
+    if (typeof this.client.config.includeGrantedScopes === "string") {
+      params.set("include_granted_scopes", this.client.config.includeGrantedScopes);
+    }
+    if (typeof this.client.config.tenant === "string") {
+      params.set("tenant", this.client.config.tenant);
+    }
+    if (typeof this.client.config.codeChallenge === "string") {
+      params.set("code_challenge", this.client.config.codeChallenge);
+    }
+    if (typeof this.client.config.codeChallengeMethod === "string") {
+      params.set("code_challenge_method", this.client.config.codeChallengeMethod);
+    }
+    if (typeof this.client.config.responseMode === "string") {
+      params.set("response_mode", this.client.config.responseMode);
+    }
+
+    if (options.state) {
+      params.set("state", options.state);
     }
     const scope = options.scope ?? this.client.config.defaults?.scope;
     if (scope) {
       params.set("scope", Array.isArray(scope) ? scope.join(" ") : scope);
-    }
-    if (options.state) {
-      params.set("state", options.state);
     }
     return new URL(`?${params}`, this.client.config.authorizationEndpointUri);
   }
@@ -160,6 +180,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     };
     const headers: Record<string, string> = {
       "Accept": "application/json",
+      "content-type": "application/x-www-form-urlencoded",
     };
 
     if (typeof this.client.config.redirectUri === "string") {
