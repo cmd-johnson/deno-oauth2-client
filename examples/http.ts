@@ -46,7 +46,7 @@ async function handleCallback(req: ServerRequest): Promise<void> {
       Authorization: `Bearer ${tokens.accessToken}`,
     },
   });
-  const { name } = await userResponse.json();
+  const { login } = await userResponse.json();
 
-  await req.respond({ body: `Hello, ${name}!` });
+  await req.respond({ body: `Hello, ${login}!` });
 }

@@ -51,9 +51,9 @@ router.get("/oauth2/callback", async (ctx) => {
       Authorization: `Bearer ${tokens.accessToken}`,
     },
   });
-  const { name } = await userResponse.json();
+  const { login } = await userResponse.json();
 
-  ctx.response.body = `Hello, ${name}!`;
+  ctx.response.body = `Hello, ${login}!`;
 });
 
 const app = new Application();
