@@ -1,3 +1,5 @@
+import { ResponseWithParsedBody } from './types.ts';
+
 interface ErrorResponseParams {
   error: string;
   "error_description"?: string;
@@ -58,9 +60,9 @@ export class AuthorizationResponseError extends Error {
 
 /** Error originating from the token response. */
 export class TokenResponseError extends Error {
-  public readonly response: Response;
+  public readonly response: ResponseWithParsedBody;
 
-  constructor(description: string, response: Response) {
+  constructor(description: string, response: ResponseWithParsedBody) {
     super(`Invalid token response: ${description}`);
     this.response = response;
   }
