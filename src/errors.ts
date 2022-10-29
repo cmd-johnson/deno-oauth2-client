@@ -5,6 +5,13 @@ interface ErrorResponseParams {
   state?: string;
 }
 
+/** Thrown when trying to use a grant that requires the client secret to be set */
+export class MissingClientSecretError extends Error {
+  constructor() {
+    super("this grant requires a clientSecret to be set");
+  }
+}
+
 /** Generic error returned by an OAuth 2.0 authorization server. */
 export class OAuth2ResponseError extends Error {
   public readonly error: string;
