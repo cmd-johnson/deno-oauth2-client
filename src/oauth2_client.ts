@@ -1,6 +1,7 @@
 import { AuthorizationCodeGrant } from "./authorization_code_grant.ts";
 import { ImplicitGrant } from "./implicit_grant.ts";
 import { RefreshTokenGrant } from "./refresh_token_grant.ts";
+import { ResourceOwnerPasswordCredentialsGrant } from "./resource_owner_password_credentials.ts";
 import { RequestOptions } from "./types.ts";
 
 export interface OAuth2ClientConfig {
@@ -44,6 +45,13 @@ export class OAuth2Client {
    * See RFC6749, section 4.2.
    */
   public implicit = new ImplicitGrant(this);
+
+  /**
+   * Implements the Resource Owner Password Credentials Grant.
+   *
+   * See RFC6749, section 4.3.
+   */
+  public ropc = new ResourceOwnerPasswordCredentialsGrant(this);
 
   /**
    * Implements the Refresh Token Grant.
