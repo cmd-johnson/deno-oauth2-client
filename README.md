@@ -13,8 +13,9 @@ As such, it
 - only implements OAuth 2.0 grants, letting you take care of storing and retrieving sessions, managing state parameters, etc.
 
 Currently supported OAuth 2.0 grants:
-- Authorization Code Grant (for clients with and without client secrets)
-- Refresh Tokens
+- [Authorization Code Grant (for clients with and without client secrets)](https://www.rfc-editor.org/rfc/rfc6749#section-4.1)
+- [Implicit Grant](https://www.rfc-editor.org/rfc/rfc6749#section-4.2)
+- [Refresh Tokens](https://www.rfc-editor.org/rfc/rfc6749#section-6)
 
 ## Usage
 

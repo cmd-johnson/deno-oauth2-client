@@ -1,4 +1,5 @@
 import { AuthorizationCodeGrant } from "./authorization_code_grant.ts";
+import { ImplicitGrant } from "./implicit_grant.ts";
 import { RefreshTokenGrant } from "./refresh_token_grant.ts";
 import { RequestOptions } from "./types.ts";
 
@@ -38,8 +39,15 @@ export class OAuth2Client {
   public code = new AuthorizationCodeGrant(this);
 
   /**
+   * Implements the Implicit Grant.
+   *
+   * See RFC6749, section 4.2.
+   */
+  public implicit = new ImplicitGrant(this);
+
+  /**
    * Implements the Refresh Token Grant.
-   * 
+   *
    * See RFC6749, section 6.
    */
   public refreshToken = new RefreshTokenGrant(this);
