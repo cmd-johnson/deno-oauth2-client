@@ -1,3 +1,6 @@
+// deno-lint-ignore-file camelcase
+
+import { assertEquals } from "https://deno.land/std@0.71.0/testing/asserts.ts";
 import { stub } from "https://deno.land/x/mock@v0.9.5/mod.ts";
 import { OAuth2Client, OAuth2ClientConfig } from "./oauth2_client.ts";
 import { Tokens } from "./types.ts";
@@ -90,8 +93,55 @@ export function buildAccessTokenCallback(
   options: AccessTokenCallbackOptions = {},
 ) {
   const base = options.baseUrl ?? "https://example.app/callback";
-  return new URL(
-    `?${new URLSearchParams((options.params ?? {}) as Record<string, string>)}`,
-    base,
+
+  const params = new URLSearchParams(
+    (options.params ?? {}) as Record<string, string>,
   );
+
+  return new URL(`?${params}`, base);
+}
+
+export interface ImplicitAccessTokenCallbackSuccess {
+  access_token?: string;
+  token_type?: string;
+  expires_in?: string;
+  scope?: string;
+  state?: string;
+}
+
+interface ImplicitAccessTokenCallbackOptions {
+  baseUrl?: string;
+  params?: ImplicitAccessTokenCallbackSuccess | AccessTokenCallbackError;
+}
+
+export function buildImplicitAccessTokenCallback(
+  options: ImplicitAccessTokenCallbackOptions = {},
+) {
+  const base = options.baseUrl ?? "https://example.app/callback";
+
+  const params = new URLSearchParams(
+    (options.params ?? {}) as Record<string, string>,
+  );
+
+  const url = new URL(base);
+  url.hash = params.toString();
+  return url;
+}
+
+export function assertMatchesUrl(test: URL, expectedUrl: string | URL): void {
+  const expected = expectedUrl instanceof URL
+    ? expectedUrl
+    : new URL(expectedUrl);
+
+  assertEquals(test.origin, expected.origin);
+  assertEquals(test.pathname, expected.pathname);
+  assertEquals(test.hash, expected.hash);
+
+  const testParams = [...test.searchParams.entries()].sort(([a], [b]) =>
+    a > b ? 1 : a < b ? -1 : 0
+  );
+  const expectedParams = [...expected.searchParams.entries()].sort(([a], [b]) =>
+    a > b ? 1 : a < b ? -1 : 0
+  );
+  assertEquals(testParams, expectedParams);
 }

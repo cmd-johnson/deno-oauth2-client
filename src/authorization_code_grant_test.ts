@@ -13,6 +13,7 @@ import {
   TokenResponseError,
 } from "./errors.ts";
 import {
+  assertMatchesUrl,
   buildAccessTokenCallback,
   getOAuth2Client,
   mockATResponse,
@@ -631,7 +632,7 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed request options over 
   assertEquals(request.headers.get("Content-Type"), "text/plain");
   assertEquals(request.headers.get("User-Agent"), "Custom User Agent");
 
-  const requestText = await request.text()
+  const requestText = await request.text();
   assertMatch(requestText, /.*custom-body-param=other_value.*/);
   assertNotMatch(requestText, /.*custom-body-param=value.*/);
 });
@@ -695,26 +696,4 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over 
 });
 
 //#endregion
-//#endregion
-
-//#region Utility test functions
-
-function assertMatchesUrl(test: URL, expectedUrl: string | URL): void {
-  const expected = expectedUrl instanceof URL
-    ? expectedUrl
-    : new URL(expectedUrl);
-
-  assertEquals(test.origin, expected.origin);
-  assertEquals(test.pathname, expected.pathname);
-  assertEquals(test.hash, expected.hash);
-
-  const testParams = [...test.searchParams.entries()].sort(([a], [b]) =>
-    a > b ? 1 : a < b ? -1 : 0
-  );
-  const expectedParams = [...expected.searchParams.entries()].sort(([a], [b]) =>
-    a > b ? 1 : a < b ? -1 : 0
-  );
-  assertEquals(testParams, expectedParams);
-}
-
 //#endregion
