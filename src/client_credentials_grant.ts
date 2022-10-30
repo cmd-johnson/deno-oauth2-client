@@ -3,7 +3,7 @@ import { OAuth2GrantBase } from "./grant_base.ts";
 import type { OAuth2Client } from "./oauth2_client.ts";
 import { RequestOptions, Tokens } from "./types.ts";
 
-export interface GetClientCredentialsTokenOptions {
+export interface ClientCredentialsTokenOptions {
   /**
    * Scopes to request with the authorization request.
    *
@@ -30,7 +30,7 @@ export class ClientCredentialsGrant extends OAuth2GrantBase {
    * Uses the clientId and clientSecret to request an access token
    */
   public async getToken(
-    options: GetClientCredentialsTokenOptions = {},
+    options: ClientCredentialsTokenOptions = {},
   ): Promise<Tokens> {
     const request = this.buildTokenRequest(options);
 
@@ -40,7 +40,7 @@ export class ClientCredentialsGrant extends OAuth2GrantBase {
   }
 
   private buildTokenRequest(
-    options: GetClientCredentialsTokenOptions,
+    options: ClientCredentialsTokenOptions,
   ): Request {
     const { clientId, clientSecret } = this.client.config;
     if (typeof clientSecret !== "string") {

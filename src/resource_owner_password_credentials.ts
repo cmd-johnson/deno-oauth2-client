@@ -2,7 +2,7 @@ import { OAuth2GrantBase } from "./grant_base.ts";
 import type { OAuth2Client } from "./oauth2_client.ts";
 import type { RequestOptions, Tokens } from "./types.ts";
 
-export interface GetROPCTokenOptions {
+export interface ResourceOwnerPasswordCredentialsTokenOptions {
   /** The resource owner username */
   username: string;
   /** The resource owner password */
@@ -32,7 +32,7 @@ export class ResourceOwnerPasswordCredentialsGrant extends OAuth2GrantBase {
    * Uses the username and password to request an access and optional refresh token
    */
   public async getToken(
-    options: GetROPCTokenOptions,
+    options: ResourceOwnerPasswordCredentialsTokenOptions,
   ): Promise<Tokens> {
     const request = this.buildTokenRequest(options);
 
@@ -41,7 +41,9 @@ export class ResourceOwnerPasswordCredentialsGrant extends OAuth2GrantBase {
     return this.parseTokenResponse(accessTokenResponse);
   }
 
-  private buildTokenRequest(options: GetROPCTokenOptions): Request {
+  private buildTokenRequest(
+    options: ResourceOwnerPasswordCredentialsTokenOptions,
+  ): Request {
     const body: Record<string, string> = {
       "grant_type": "password",
       username: options.username,

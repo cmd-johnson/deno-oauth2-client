@@ -4,7 +4,7 @@ import type { RequestOptions, Tokens } from "./types.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";
 import { createPkceChallenge } from "./pkce.ts";
 
-interface GetUriOptionsWithPKCE {
+interface AuthorizationUriOptionsWithPKCE {
   /**
    * State parameter to send along with the authorization request.
    *
@@ -22,18 +22,25 @@ interface GetUriOptionsWithPKCE {
   disablePkce?: false;
 }
 
-type GetUriOptionsWithoutPKCE =
-  & Omit<GetUriOptionsWithPKCE, "disablePkce">
+type AuthorizationUriOptionsWithoutPKCE =
+  & Omit<AuthorizationUriOptionsWithPKCE, "disablePkce">
   & { disablePkce: true };
 
-export type GetUriOptions = GetUriOptionsWithPKCE | GetUriOptionsWithoutPKCE;
+export type AuthorizationUriOptions =
+  | AuthorizationUriOptionsWithPKCE
+  | AuthorizationUriOptionsWithoutPKCE;
 
-export interface AuthorizationUri {
+export type AuthorizationUriWithoutVerifier = URL;
+export interface AuthorizationUriWithVerifier {
   uri: URL;
   codeVerifier: string;
 }
 
-export interface GetTokenOptions {
+export type AuthorizationUri =
+  | AuthorizationUriWithVerifier
+  | AuthorizationUriWithoutVerifier;
+
+export interface AuthorizationCodeTokenOptions {
   /**
    * The state parameter expected to be returned by the authorization response.
    *
@@ -79,12 +86,14 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
    * authorization callback or the token request will fail.
    */
   public getAuthorizationUri(
-    options?: GetUriOptionsWithPKCE,
-  ): Promise<AuthorizationUri>;
-  public getAuthorizationUri(options: GetUriOptionsWithoutPKCE): Promise<URL>;
+    options?: AuthorizationUriOptionsWithPKCE,
+  ): Promise<AuthorizationUriWithVerifier>;
+  public getAuthorizationUri(
+    options: AuthorizationUriOptionsWithoutPKCE,
+  ): Promise<AuthorizationUriWithoutVerifier>;
   public async getAuthorizationUri(
-    options: GetUriOptions = {},
-  ): Promise<URL | AuthorizationUri> {
+    options: AuthorizationUriOptions = {},
+  ): Promise<AuthorizationUri> {
     const params = new URLSearchParams();
     params.set("response_type", "code");
     params.set("client_id", this.client.config.clientId);
@@ -121,7 +130,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
    */
   public async getToken(
     authResponseUri: string | URL,
-    options: GetTokenOptions = {},
+    options: AuthorizationCodeTokenOptions = {},
   ): Promise<Tokens> {
     const validated = await this.validateAuthorizationResponse(
       this.toUrl(authResponseUri),
@@ -141,7 +150,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
 
   private async validateAuthorizationResponse(
     url: URL,
-    options: GetTokenOptions,
+    options: AuthorizationCodeTokenOptions,
   ): Promise<{ code: string; state?: string }> {
     if (typeof this.client.config.redirectUri === "string") {
       const expectedUrl = new URL(this.client.config.redirectUri);

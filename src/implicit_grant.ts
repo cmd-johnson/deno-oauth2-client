@@ -3,7 +3,7 @@ import { OAuth2GrantBase } from "./grant_base.ts";
 import { AuthorizationResponseError, OAuth2ResponseError } from "./errors.ts";
 import type { RequestOptions, Tokens } from "./types.ts";
 
-export interface GetUriOptions {
+export interface ImplicitUriOptions {
   /**
    * State parameter to send along with the authorization request.
    *
@@ -19,7 +19,7 @@ export interface GetUriOptions {
   scope?: string | string[];
 }
 
-export interface GetTokenOptions {
+export interface ImplicitTokenOptions {
   /**
    * The state parameter expected to be returned by the authorization response.
    *
@@ -45,7 +45,7 @@ export class ImplicitGrant extends OAuth2GrantBase {
   }
 
   /** Builds a URI you can redirect a user to to make the authorization request. */
-  public getAuthorizationUri(options: GetUriOptions = {}): URL {
+  public getAuthorizationUri(options: ImplicitUriOptions = {}): URL {
     const params = new URLSearchParams();
     params.set("response_type", "token");
     params.set("client_id", this.client.config.clientId);
@@ -71,7 +71,7 @@ export class ImplicitGrant extends OAuth2GrantBase {
    */
   public async getToken(
     authResponseUri: string | URL,
-    options: GetTokenOptions = {},
+    options: ImplicitTokenOptions = {},
   ): Promise<Tokens> {
     const url = authResponseUri instanceof URL
       ? authResponseUri
