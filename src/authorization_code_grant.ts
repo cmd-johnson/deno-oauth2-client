@@ -30,7 +30,9 @@ export type AuthorizationUriOptions =
   | AuthorizationUriOptionsWithPKCE
   | AuthorizationUriOptionsWithoutPKCE;
 
-export type AuthorizationUriWithoutVerifier = URL;
+export interface AuthorizationUriWithoutVerifier {
+  uri: URL;
+}
 export interface AuthorizationUriWithVerifier {
   uri: URL;
   codeVerifier: string;
@@ -109,7 +111,9 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     }
 
     if (options.disablePkce === true) {
-      return new URL(`?${params}`, this.client.config.authorizationEndpointUri);
+      return {
+        uri: new URL(`?${params}`, this.client.config.authorizationEndpointUri),
+      };
     }
 
     const challenge = await createPkceChallenge();

@@ -186,91 +186,92 @@ Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses specified scopes over
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri works without additional options with PKCE disabled", async () => {
   assertMatchesUrl(
-    await getOAuth2Client().code.getAuthorizationUri({ disablePkce: true }),
+    (await getOAuth2Client().code.getAuthorizationUri({ disablePkce: true }))
+      .uri,
     "https://auth.server/auth?response_type=code&client_id=clientId",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing a single scope with PKCE disabled", async () => {
   assertMatchesUrl(
-    await getOAuth2Client().code.getAuthorizationUri({
+    (await getOAuth2Client().code.getAuthorizationUri({
       scope: "singleScope",
       disablePkce: true,
-    }),
+    })).uri,
     "https://auth.server/auth?response_type=code&client_id=clientId&scope=singleScope",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing multiple scopes with PKCE disabled", async () => {
   assertMatchesUrl(
-    await getOAuth2Client().code.getAuthorizationUri({
+    (await getOAuth2Client().code.getAuthorizationUri({
       scope: ["multiple", "scopes"],
       disablePkce: true,
-    }),
+    })).uri,
     "https://auth.server/auth?response_type=code&client_id=clientId&scope=multiple+scopes",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing a state parameter with PKCE disabled", async () => {
   assertMatchesUrl(
-    await getOAuth2Client().code.getAuthorizationUri({
+    (await getOAuth2Client().code.getAuthorizationUri({
       state: "someState",
       disablePkce: true,
-    }),
+    })).uri,
     "https://auth.server/auth?response_type=code&client_id=clientId&state=someState",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri with PKCE disabled", async () => {
   assertMatchesUrl(
-    await getOAuth2Client({
+    (await getOAuth2Client({
       redirectUri: "https://example.app/redirect",
-    }).code.getAuthorizationUri({ disablePkce: true }),
+    }).code.getAuthorizationUri({ disablePkce: true })).uri,
     "https://auth.server/auth?response_type=code&client_id=clientId&redirect_uri=https%3A%2F%2Fexample.app%2Fredirect",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and a single scope with PKCE disabled", async () => {
   assertMatchesUrl(
-    await getOAuth2Client({
+    (await getOAuth2Client({
       redirectUri: "https://example.app/redirect",
     }).code.getAuthorizationUri({
       scope: "singleScope",
       disablePkce: true,
-    }),
+    })).uri,
     "https://auth.server/auth?response_type=code&client_id=clientId&redirect_uri=https%3A%2F%2Fexample.app%2Fredirect&scope=singleScope",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and multiple scopes with PKCE disabled", async () => {
   assertMatchesUrl(
-    await getOAuth2Client({
+    (await getOAuth2Client({
       redirectUri: "https://example.app/redirect",
     }).code.getAuthorizationUri({
       scope: ["multiple", "scopes"],
       disablePkce: true,
-    }),
+    })).uri,
     "https://auth.server/auth?response_type=code&client_id=clientId&redirect_uri=https%3A%2F%2Fexample.app%2Fredirect&scope=multiple+scopes",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses default scopes if no scope was specified with PKCE disabled", async () => {
   assertMatchesUrl(
-    await getOAuth2Client({
+    (await getOAuth2Client({
       defaults: { scope: ["default", "scopes"] },
-    }).code.getAuthorizationUri({ disablePkce: true }),
+    }).code.getAuthorizationUri({ disablePkce: true })).uri,
     "https://auth.server/auth?response_type=code&client_id=clientId&scope=default+scopes",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses specified scopes over default scopes with PKCE disabled", async () => {
   assertMatchesUrl(
-    await getOAuth2Client({
+    (await getOAuth2Client({
       defaults: { scope: ["default", "scopes"] },
     }).code.getAuthorizationUri({
       scope: "notDefault",
       disablePkce: true,
-    }),
+    })).uri,
     "https://auth.server/auth?response_type=code&client_id=clientId&scope=notDefault",
   );
 });
