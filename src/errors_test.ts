@@ -1,7 +1,7 @@
 import {
   assertEquals,
   assertThrows,
-} from "https://deno.land/std@0.71.0/testing/asserts.ts";
+} from "https://deno.land/std@0.161.0/testing/asserts.ts";
 import {
   AuthorizationResponseError,
   OAuth2ResponseError,

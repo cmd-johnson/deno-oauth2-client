@@ -1,6 +1,4 @@
-import {
-  assertEquals,
-} from "https://deno.land/std@0.71.0/testing/asserts.ts";
+import { assertEquals } from "https://deno.land/std@0.161.0/testing/asserts.ts";
 
 import { OAuth2Client, OAuth2ClientConfig } from "./oauth2_client.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";

@@ -1,7 +1,10 @@
 // deno-lint-ignore-file camelcase
 
-import { assertEquals } from "https://deno.land/std@0.71.0/testing/asserts.ts";
-import { stub } from "https://deno.land/x/mock@v0.9.5/mod.ts";
+import { assertEquals } from "https://deno.land/std@0.161.0/testing/asserts.ts";
+import {
+  returnsNext,
+  stub,
+} from "https://deno.land/std@0.161.0/testing/mock.ts";
 import { OAuth2Client, OAuth2ClientConfig } from "./oauth2_client.ts";
 import { Tokens } from "./types.ts";
 
@@ -57,24 +60,26 @@ export async function mockATResponse(
   request: (() => Promise<Tokens>),
   response?: MockAccessTokenResponse,
 ): Promise<MockAccessTokenResponseResult> {
-  const fetchStub = stub(window, "fetch");
-  try {
-    const body = typeof response?.body === "string"
-      ? response?.body
-      : JSON.stringify(
-        response?.body ?? { access_token: "at", token_type: "tt" },
-      );
-
-    const headers = new Headers(
-      response?.headers ?? { "Content-Type": "application/json" },
+  const body = typeof response?.body === "string"
+    ? response?.body
+    : JSON.stringify(
+      response?.body ?? { access_token: "at", token_type: "tt" },
     );
 
-    const status = response?.status ?? 200;
+  const headers = new Headers(
+    response?.headers ?? { "Content-Type": "application/json" },
+  );
 
-    fetchStub.returns = [
+  const status = response?.status ?? 200;
+
+  const fetchStub = stub(
+    window,
+    "fetch",
+    returnsNext([
       Promise.resolve(new Response(body, { headers, status })),
-    ];
-
+    ]),
+  );
+  try {
     const result = await request();
     const req = fetchStub.calls[0].args[0] as Request;
 
