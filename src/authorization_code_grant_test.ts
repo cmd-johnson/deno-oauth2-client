@@ -7,6 +7,7 @@ import {
 } from "https://deno.land/std@0.161.0/testing/asserts.ts";
 import {
   assertSpyCall,
+  assertSpyCallAsync,
   assertSpyCalls,
   spy,
 } from "https://deno.land/std@0.161.0/testing/mock.ts";
@@ -660,6 +661,18 @@ Deno.test("AuthorizationCodeGrant.getToken parses the full token response correc
   });
 });
 
+Deno.test("AuthorizationCodeGrant.getToken supports async state validators", async () => {
+  await mockATResponse(
+    () =>
+      getOAuth2Client().code.getToken(
+        buildAccessTokenCallback({
+          params: { code: "code" },
+        }),
+        { stateValidator: () => Promise.resolve(true) },
+      ),
+  );
+});
+
 Deno.test("AuthorizationCodeGrant.getToken doesn't throw if it didn't receive a state but the state validator returns true", async () => {
   await mockATResponse(
     () =>
@@ -813,6 +826,25 @@ Deno.test("AuthorizationCodeGrant.getToken uses the default state validator if n
   );
 
   assertSpyCall(defaultValidator, 0, { args: ["some_state"], returned: true });
+  assertSpyCalls(defaultValidator, 1);
+});
+
+Deno.test("AuthorizationCodeGrant.getToken supports async default state validators", async () => {
+  const defaultValidator = spy(() => Promise.resolve(true));
+
+  await mockATResponse(
+    () =>
+      getOAuth2Client({
+        defaults: { stateValidator: defaultValidator },
+      }).code.getToken(buildAccessTokenCallback({
+        params: { code: "authCode", state: "some_state" },
+      })),
+  );
+
+  assertSpyCallAsync(defaultValidator, 0, {
+    args: ["some_state"],
+    returned: true,
+  });
   assertSpyCalls(defaultValidator, 1);
 });
 

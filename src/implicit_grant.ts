@@ -34,7 +34,7 @@ export interface GetTokenOptions {
    *
    * The option object's state value is ignored when a stateValidator is passed.
    */
-  stateValidator?: (state: string | null) => boolean;
+  stateValidator?: (state: string | null) => Promise<boolean> | boolean;
   /** Request options used when making the access token request. */
   requestOptions?: RequestOptions;
 }
@@ -69,10 +69,10 @@ export class ImplicitGrant extends OAuth2GrantBase {
    * @param authResponseUri The complete URI the user got redirected to by the authorization server after making the authorization request.
    *     Must include the fragment (sometimes also called "hash") of the URL.
    */
-  public getToken(
+  public async getToken(
     authResponseUri: string | URL,
     options: GetTokenOptions = {},
-  ): Tokens {
+  ): Promise<Tokens> {
     const url = authResponseUri instanceof URL
       ? authResponseUri
       : new URL(authResponseUri);
@@ -130,7 +130,7 @@ export class ImplicitGrant extends OAuth2GrantBase {
       tokens.expiresIn = parseInt(expiresInRaw, 10);
     }
 
-    if (stateValidator && !stateValidator(state)) {
+    if (stateValidator && !await stateValidator(state)) {
       if (state === null) {
         throw new AuthorizationResponseError("missing state");
       } else {

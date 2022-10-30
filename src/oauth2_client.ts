@@ -28,7 +28,7 @@ export interface OAuth2ClientConfig {
     /** Default scopes to request unless otherwise specified. */
     scope?: string | string[];
     /** Default state validator to use for validating the authorization response's state value. */
-    stateValidator?: (state: string | null) => boolean;
+    stateValidator?: (state: string | null) => Promise<boolean> | boolean;
   };
 }
 

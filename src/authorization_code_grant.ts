@@ -48,7 +48,7 @@ export interface GetTokenOptions {
    *
    * The option object's state value is ignored when a stateValidator is passed.
    */
-  stateValidator?: (state: string | null) => boolean;
+  stateValidator?: (state: string | null) => Promise<boolean> | boolean;
   /**
    * When using PKCE, the code verifier that you got by calling getAuthorizationUri
    */
@@ -123,7 +123,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     authResponseUri: string | URL,
     options: GetTokenOptions = {},
   ): Promise<Tokens> {
-    const validated = this.validateAuthorizationResponse(
+    const validated = await this.validateAuthorizationResponse(
       this.toUrl(authResponseUri),
       options,
     );
@@ -139,10 +139,10 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     return this.parseTokenResponse(accessTokenResponse);
   }
 
-  private validateAuthorizationResponse(
+  private async validateAuthorizationResponse(
     url: URL,
     options: GetTokenOptions,
-  ): { code: string; state?: string } {
+  ): Promise<{ code: string; state?: string }> {
     if (typeof this.client.config.redirectUri === "string") {
       const expectedUrl = new URL(this.client.config.redirectUri);
 
@@ -180,7 +180,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
       (options.state && ((s) => s === options.state)) ||
       this.client.config.defaults?.stateValidator;
 
-    if (stateValidator && !stateValidator(state)) {
+    if (stateValidator && !await stateValidator(state)) {
       if (state === null) {
         throw new AuthorizationResponseError("Missing state");
       } else {
