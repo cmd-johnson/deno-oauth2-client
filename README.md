@@ -14,7 +14,10 @@ As such, it
 
 Currently supported OAuth 2.0 grants:
 - [Authorization Code Grant (for clients with and without client secrets)](https://www.rfc-editor.org/rfc/rfc6749#section-4.1)
+    - Out of the box support for [Proof Key for Code Exchange (PKCE)](https://www.rfc-editor.org/rfc/rfc7636)
 - [Implicit Grant](https://www.rfc-editor.org/rfc/rfc6749#section-4.2)
+- [Resource Owner Password Credentials Grant](https://www.rfc-editor.org/rfc/rfc6749#section-4.3)
+- [Client Credentials Grant](https://www.rfc-editor.org/rfc/rfc6749#section-4.4)
 - [Refresh Tokens](https://www.rfc-editor.org/rfc/rfc6749#section-6)
 
 ## Usage
