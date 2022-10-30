@@ -3,7 +3,7 @@ import { OAuth2GrantBase } from "./grant_base.ts";
 import { AuthorizationResponseError, OAuth2ResponseError } from "./errors.ts";
 import type { RequestOptions, Tokens } from "./types.ts";
 
-export interface GetUriOptions {
+export interface ImplicitUriOptions {
   /**
    * State parameter to send along with the authorization request.
    *
@@ -19,7 +19,7 @@ export interface GetUriOptions {
   scope?: string | string[];
 }
 
-export interface GetTokenOptions {
+export interface ImplicitTokenOptions {
   /**
    * The state parameter expected to be returned by the authorization response.
    *
@@ -34,7 +34,7 @@ export interface GetTokenOptions {
    *
    * The option object's state value is ignored when a stateValidator is passed.
    */
-  stateValidator?: (state: string | null) => boolean;
+  stateValidator?: (state: string | null) => Promise<boolean> | boolean;
   /** Request options used when making the access token request. */
   requestOptions?: RequestOptions;
 }
@@ -45,7 +45,7 @@ export class ImplicitGrant extends OAuth2GrantBase {
   }
 
   /** Builds a URI you can redirect a user to to make the authorization request. */
-  public getAuthorizationUri(options: GetUriOptions = {}): URL {
+  public getAuthorizationUri(options: ImplicitUriOptions = {}): URL {
     const params = new URLSearchParams();
     params.set("response_type", "token");
     params.set("client_id", this.client.config.clientId);
@@ -69,10 +69,10 @@ export class ImplicitGrant extends OAuth2GrantBase {
    * @param authResponseUri The complete URI the user got redirected to by the authorization server after making the authorization request.
    *     Must include the fragment (sometimes also called "hash") of the URL.
    */
-  public getToken(
+  public async getToken(
     authResponseUri: string | URL,
-    options: GetTokenOptions = {},
-  ): Tokens {
+    options: ImplicitTokenOptions = {},
+  ): Promise<Tokens> {
     const url = authResponseUri instanceof URL
       ? authResponseUri
       : new URL(authResponseUri);
@@ -130,7 +130,7 @@ export class ImplicitGrant extends OAuth2GrantBase {
       tokens.expiresIn = parseInt(expiresInRaw, 10);
     }
 
-    if (stateValidator && !stateValidator(state)) {
+    if (stateValidator && !await stateValidator(state)) {
       if (state === null) {
         throw new AuthorizationResponseError("missing state");
       } else {

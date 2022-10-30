@@ -1,9 +1,14 @@
 // deno-lint-ignore-file no-explicit-any
 import {
   assertEquals,
-  assertThrows,
-} from "https://deno.land/std@0.71.0/testing/asserts.ts";
-import { spy } from "https://deno.land/x/mock@v0.9.5/mod.ts";
+  assertRejects,
+} from "https://deno.land/std@0.161.0/testing/asserts.ts";
+import {
+  assertSpyCall,
+  assertSpyCallAsync,
+  assertSpyCalls,
+  spy,
+} from "https://deno.land/std@0.161.0/testing/mock.ts";
 
 import { AuthorizationResponseError, OAuth2ResponseError } from "./errors.ts";
 import {
@@ -103,8 +108,8 @@ Deno.test("ImplicitGrant.getAuthorizationUri uses specified scopes over default 
 
 //#region ImplicitGrant.getToken error paths
 
-Deno.test("ImplicitGrant.getToken throws if the received redirectUri does not match the configured one", () => {
-  assertThrows(
+Deno.test("ImplicitGrant.getToken throws if the received redirectUri does not match the configured one", async () => {
+  await assertRejects(
     () =>
       getOAuth2Client({
         redirectUri: "https://example.com/redirect",
@@ -118,8 +123,8 @@ Deno.test("ImplicitGrant.getToken throws if the received redirectUri does not ma
   );
 });
 
-Deno.test("ImplicitGrant.getToken throws if the callbackUri does not contain any parameters", () => {
-  assertThrows(
+Deno.test("ImplicitGrant.getToken throws if the callbackUri does not contain any parameters", async () => {
+  await assertRejects(
     () =>
       getOAuth2Client().implicit.getToken(
         buildImplicitAccessTokenCallback(),
@@ -129,8 +134,8 @@ Deno.test("ImplicitGrant.getToken throws if the callbackUri does not contain any
   );
 });
 
-Deno.test("ImplicitGrant.getToken throws if the callbackUri contains an error parameter", () => {
-  assertThrows(
+Deno.test("ImplicitGrant.getToken throws if the callbackUri contains an error parameter", async () => {
+  await assertRejects(
     () =>
       getOAuth2Client().implicit.getToken(
         buildImplicitAccessTokenCallback({
@@ -142,8 +147,8 @@ Deno.test("ImplicitGrant.getToken throws if the callbackUri contains an error pa
   );
 });
 
-Deno.test("ImplicitGrant.getToken throws if the callbackUri contains the error, error_description and error_uri parameters and adds them to the error object", () => {
-  const error = assertThrows(
+Deno.test("ImplicitGrant.getToken throws if the callbackUri contains the error, error_description and error_uri parameters and adds them to the error object", async () => {
+  const error = await assertRejects(
     () =>
       getOAuth2Client().implicit.getToken(
         buildImplicitAccessTokenCallback({
@@ -162,8 +167,8 @@ Deno.test("ImplicitGrant.getToken throws if the callbackUri contains the error, 
   assertEquals(error.errorUri, "error://uri");
 });
 
-Deno.test("ImplicitGrant.getToken throws if the callbackUri doesn't contain an access_token", () => {
-  assertThrows(
+Deno.test("ImplicitGrant.getToken throws if the callbackUri doesn't contain an access_token", async () => {
+  await assertRejects(
     () =>
       getOAuth2Client().implicit.getToken(
         buildImplicitAccessTokenCallback({
@@ -176,8 +181,8 @@ Deno.test("ImplicitGrant.getToken throws if the callbackUri doesn't contain an a
   );
 });
 
-Deno.test("ImplicitGrant.getToken throws if it didn't receive an access_token", () => {
-  assertThrows(
+Deno.test("ImplicitGrant.getToken throws if it didn't receive an access_token", async () => {
+  await assertRejects(
     () =>
       getOAuth2Client().implicit.getToken(
         buildImplicitAccessTokenCallback({
@@ -189,8 +194,8 @@ Deno.test("ImplicitGrant.getToken throws if it didn't receive an access_token", 
   );
 });
 
-Deno.test("ImplicitGrant.getToken throws if it didn't receive a token_type", () => {
-  assertThrows(
+Deno.test("ImplicitGrant.getToken throws if it didn't receive a token_type", async () => {
+  await assertRejects(
     () =>
       getOAuth2Client().implicit.getToken(
         buildImplicitAccessTokenCallback({
@@ -202,8 +207,8 @@ Deno.test("ImplicitGrant.getToken throws if it didn't receive a token_type", () 
   );
 });
 
-Deno.test("ImplicitGrant.getToken throws if it didn't receive a state and the state validator fails", () => {
-  assertThrows(
+Deno.test("ImplicitGrant.getToken throws if it didn't receive a state and the state validator fails", async () => {
+  await assertRejects(
     () =>
       getOAuth2Client().implicit.getToken(
         buildImplicitAccessTokenCallback({
@@ -216,8 +221,37 @@ Deno.test("ImplicitGrant.getToken throws if it didn't receive a state and the st
   );
 });
 
+Deno.test("ImplicitGrant.getToken throws if it didn't receive a state and the async state validator fails", async () => {
+  await assertRejects(
+    () =>
+      getOAuth2Client().implicit.getToken(
+        buildImplicitAccessTokenCallback({
+          params: { access_token: "at", token_type: "Bearer" },
+        }),
+        { stateValidator: () => Promise.resolve(false) },
+      ),
+    AuthorizationResponseError,
+    "missing state",
+  );
+});
+
+Deno.test("ImplicitGrant.getToken throws if it didn't receive a state and the default async state validator fails", async () => {
+  await assertRejects(
+    () =>
+      getOAuth2Client({
+        defaults: { stateValidator: () => Promise.resolve(false) },
+      }).implicit.getToken(
+        buildImplicitAccessTokenCallback({
+          params: { access_token: "at", token_type: "Bearer" },
+        }),
+      ),
+    AuthorizationResponseError,
+    "missing state",
+  );
+});
+
 Deno.test("ImplicitGrant.getToken throws if it didn't receive a state but a state was expected", async () => {
-  await assertThrows(
+  await assertRejects(
     () =>
       getOAuth2Client().implicit.getToken(
         buildImplicitAccessTokenCallback({
@@ -231,7 +265,7 @@ Deno.test("ImplicitGrant.getToken throws if it didn't receive a state but a stat
 });
 
 Deno.test("ImplicitGrant.getToken throws if it received a state that does not match the given state parameter", async () => {
-  await assertThrows(
+  await assertRejects(
     () =>
       getOAuth2Client().implicit.getToken(
         buildImplicitAccessTokenCallback({
@@ -249,7 +283,7 @@ Deno.test("ImplicitGrant.getToken throws if it received a state that does not ma
 });
 
 Deno.test("ImplicitGrant.getToken throws if the stateValidator returns false", async () => {
-  await assertThrows(
+  await assertRejects(
     () =>
       getOAuth2Client().implicit.getToken(
         buildImplicitAccessTokenCallback({
@@ -266,8 +300,26 @@ Deno.test("ImplicitGrant.getToken throws if the stateValidator returns false", a
   );
 });
 
-Deno.test("ImplicitGrant.getToken throws if the server response's expires_in property is not a number", () => {
-  assertThrows(
+Deno.test("ImplicitGrant.getToken throws if the async stateValidator returns false", async () => {
+  await assertRejects(
+    () =>
+      getOAuth2Client().implicit.getToken(
+        buildImplicitAccessTokenCallback({
+          params: {
+            access_token: "at",
+            token_type: "Bearer",
+            state: "invalid_state",
+          },
+        }),
+        { stateValidator: () => Promise.resolve(false) },
+      ),
+    AuthorizationResponseError,
+    "invalid state: invalid_state",
+  );
+});
+
+Deno.test("ImplicitGrant.getToken throws if the server response's expires_in property is not a number", async () => {
+  await assertRejects(
     () =>
       getOAuth2Client().implicit.getToken(buildImplicitAccessTokenCallback({
         params: {
@@ -285,8 +337,8 @@ Deno.test("ImplicitGrant.getToken throws if the server response's expires_in pro
 
 //#region ImplicitGrant.getToken successful paths
 
-Deno.test("ImplicitGrant.getToken parses the minimal token response correctly", () => {
-  const result = getOAuth2Client().implicit.getToken(
+Deno.test("ImplicitGrant.getToken parses the minimal token response correctly", async () => {
+  const result = await getOAuth2Client().implicit.getToken(
     buildImplicitAccessTokenCallback({
       params: { access_token: "accessToken", token_type: "tokenType" },
     }),
@@ -297,8 +349,8 @@ Deno.test("ImplicitGrant.getToken parses the minimal token response correctly", 
   });
 });
 
-Deno.test("ImplicitGrant.getToken parses the full token response correctly", () => {
-  const result = getOAuth2Client().implicit.getToken(
+Deno.test("ImplicitGrant.getToken parses the full token response correctly", async () => {
+  const result = await getOAuth2Client().implicit.getToken(
     buildImplicitAccessTokenCallback({
       params: {
         access_token: "accessToken",
@@ -316,8 +368,8 @@ Deno.test("ImplicitGrant.getToken parses the full token response correctly", () 
   });
 });
 
-Deno.test("ImplicitGrant.getToken doesn't throw if it didn't receive a state but the state validator returns true", () => {
-  getOAuth2Client().implicit.getToken(
+Deno.test("ImplicitGrant.getToken doesn't throw if it didn't receive a state but the state validator returns true", async () => {
+  await getOAuth2Client().implicit.getToken(
     buildImplicitAccessTokenCallback({
       params: { access_token: "accessToken", token_type: "tokenType" },
     }),
@@ -325,10 +377,19 @@ Deno.test("ImplicitGrant.getToken doesn't throw if it didn't receive a state but
   );
 });
 
-Deno.test("ImplicitGrant.getToken uses the default state validator if no state or validator was given", () => {
+Deno.test("ImplicitGrant.getToken doesn't throw if it didn't receive a state but the async state validator returns true", async () => {
+  await getOAuth2Client().implicit.getToken(
+    buildImplicitAccessTokenCallback({
+      params: { access_token: "accessToken", token_type: "tokenType" },
+    }),
+    { stateValidator: () => Promise.resolve(true) },
+  );
+});
+
+Deno.test("ImplicitGrant.getToken uses the default state validator if no state or validator was given", async () => {
   const defaultValidator = spy(() => true);
 
-  getOAuth2Client({
+  await getOAuth2Client({
     defaults: { stateValidator: defaultValidator },
   }).implicit.getToken(buildImplicitAccessTokenCallback({
     params: {
@@ -338,10 +399,28 @@ Deno.test("ImplicitGrant.getToken uses the default state validator if no state o
     },
   }));
 
-  assertEquals(
-    defaultValidator.calls,
-    [{ args: ["some_state"], returned: true }],
-  );
+  assertSpyCall(defaultValidator, 0, { args: ["some_state"], returned: true });
+  assertSpyCalls(defaultValidator, 1);
+});
+
+Deno.test("ImplicitGrant.getToken uses the default async state validator if no state or validator was given", async () => {
+  const defaultValidator = spy(() => Promise.resolve(true));
+
+  await getOAuth2Client({
+    defaults: { stateValidator: defaultValidator },
+  }).implicit.getToken(buildImplicitAccessTokenCallback({
+    params: {
+      access_token: "accessToken",
+      token_type: "tokenType",
+      state: "some_state",
+    },
+  }));
+
+  assertSpyCallAsync(defaultValidator, 0, {
+    args: ["some_state"],
+    returned: true,
+  });
+  assertSpyCalls(defaultValidator, 1);
 });
 
 Deno.test("ImplicitGrant.getToken uses the passed state validator over the default validator", () => {
@@ -361,8 +440,31 @@ Deno.test("ImplicitGrant.getToken uses the passed state validator over the defau
     { stateValidator: validator },
   );
 
-  assertEquals(defaultValidator.calls, []);
-  assertEquals(validator.calls, [{ args: ["some_state"], returned: true }]);
+  assertSpyCalls(defaultValidator, 0);
+  assertSpyCall(validator, 0, { args: ["some_state"], returned: true });
+  assertSpyCalls(validator, 1);
+});
+
+Deno.test("ImplicitGrant.getToken uses the passed async state validator over the default validator", () => {
+  const defaultValidator = spy(() => true);
+  const validator = spy(() => Promise.resolve(true));
+
+  getOAuth2Client({
+    defaults: { stateValidator: defaultValidator },
+  }).implicit.getToken(
+    buildImplicitAccessTokenCallback({
+      params: {
+        access_token: "accessToken",
+        token_type: "tokenType",
+        state: "some_state",
+      },
+    }),
+    { stateValidator: validator },
+  );
+
+  assertSpyCalls(defaultValidator, 0);
+  assertSpyCallAsync(validator, 0, { args: ["some_state"], returned: true });
+  assertSpyCalls(validator, 1);
 });
 
 Deno.test("ImplicitGrant.getToken uses the passed state validator over the passed state", () => {
@@ -382,8 +484,9 @@ Deno.test("ImplicitGrant.getToken uses the passed state validator over the passe
     { stateValidator: validator, state: "other_state" },
   );
 
-  assertEquals(defaultValidator.calls, []);
-  assertEquals(validator.calls, [{ args: ["some_state"], returned: true }]);
+  assertSpyCalls(defaultValidator, 0);
+  assertSpyCall(validator, 0, { args: ["some_state"], returned: true });
+  assertSpyCalls(validator, 1);
 });
 
 //#endregion

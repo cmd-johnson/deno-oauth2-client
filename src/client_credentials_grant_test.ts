@@ -3,8 +3,8 @@ import {
   assertEquals,
   assertMatch,
   assertNotMatch,
-  assertThrowsAsync,
-} from "https://deno.land/std@0.71.0/testing/asserts.ts";
+  assertRejects,
+} from "https://deno.land/std@0.161.0/testing/asserts.ts";
 
 import {
   MissingClientSecretError,
@@ -16,7 +16,7 @@ import { getOAuth2Client, mockATResponse } from "./test_utils.ts";
 //#region ClientCredentialsGrant.getToken error paths
 
 Deno.test("ClientCredentialsGrant.getToken throws when no client secret was configured", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () => getOAuth2Client().clientCredentials.getToken(),
     MissingClientSecretError,
     "this grant requires a clientSecret to be set",
@@ -24,7 +24,7 @@ Deno.test("ClientCredentialsGrant.getToken throws when no client secret was conf
 });
 
 Deno.test("ClientCredentialsGrant.getToken throws if the server responded with a Content-Type other than application/json", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -38,7 +38,7 @@ Deno.test("ClientCredentialsGrant.getToken throws if the server responded with a
 });
 
 Deno.test("ClientCredentialsGrant.getToken throws if the server responded with a correctly formatted error", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -52,7 +52,7 @@ Deno.test("ClientCredentialsGrant.getToken throws if the server responded with a
 });
 
 Deno.test("ClientCredentialsGrant.getToken throws if the server responded with a 4xx or 5xx and the body doesn't contain an error parameter", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -66,7 +66,7 @@ Deno.test("ClientCredentialsGrant.getToken throws if the server responded with a
 });
 
 Deno.test("ClientCredentialsGrant.getToken throws if the server's response is not a JSON object", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -77,7 +77,7 @@ Deno.test("ClientCredentialsGrant.getToken throws if the server's response is no
     TokenResponseError,
     "Invalid token response: body is not a JSON object",
   );
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -91,7 +91,7 @@ Deno.test("ClientCredentialsGrant.getToken throws if the server's response is no
 });
 
 Deno.test("ClientCredentialsGrant.getToken throws if the server's response does not contain a token_type", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -105,7 +105,7 @@ Deno.test("ClientCredentialsGrant.getToken throws if the server's response does 
 });
 
 Deno.test("ClientCredentialsGrant.getToken throws if the server response's token_type is not a string", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -124,7 +124,7 @@ Deno.test("ClientCredentialsGrant.getToken throws if the server response's token
 });
 
 Deno.test("ClientCredentialsGrant.getToken throws if the server's response does not contain an access_token", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -138,7 +138,7 @@ Deno.test("ClientCredentialsGrant.getToken throws if the server's response does 
 });
 
 Deno.test("ClientCredentialsGrant.getToken throws if the server response's access_token is not a string", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -157,7 +157,7 @@ Deno.test("ClientCredentialsGrant.getToken throws if the server response's acces
 });
 
 Deno.test("ClientCredentialsGrant.getToken throws if the server response's refresh_token property is not a string", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -177,7 +177,7 @@ Deno.test("ClientCredentialsGrant.getToken throws if the server response's refre
 });
 
 Deno.test("ClientCredentialsGrant.getToken throws if the server response's expires_in property is not a number", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -197,7 +197,7 @@ Deno.test("ClientCredentialsGrant.getToken throws if the server response's expir
 });
 
 Deno.test("ClientCredentialsGrant.getToken throws if the server response's scope property is not a string", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
