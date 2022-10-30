@@ -3,9 +3,13 @@ import {
   assertEquals,
   assertMatch,
   assertNotMatch,
-  assertThrowsAsync,
-} from "https://deno.land/std@0.71.0/testing/asserts.ts";
-import { spy } from "https://deno.land/x/mock@v0.9.5/mod.ts";
+  assertRejects,
+} from "https://deno.land/std@0.161.0/testing/asserts.ts";
+import {
+  assertSpyCall,
+  assertSpyCalls,
+  spy,
+} from "https://deno.land/std@0.161.0/testing/mock.ts";
 
 import {
   AuthorizationResponseError,
@@ -19,88 +23,252 @@ import {
   mockATResponse,
 } from "./test_utils.ts";
 
-//#region AuthorizationCodeGrant.getAuthorizationUri successful paths
+//#region AuthorizationCodeGrant.getAuthorizationUri successful paths (with PKCE)
 
-Deno.test("AuthorizationCodeGrant.getAuthorizationUri works without additional options", () => {
+const urlBase64Regex = /^[a-z0-9_-]+$/i;
+
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works without additional options", async () => {
+  const { uri, codeVerifier } = await getOAuth2Client().code
+    .getAuthorizationUri();
+
+  const codeChallenge = uri.searchParams.get("code_challenge");
+  assertMatch(codeVerifier, urlBase64Regex);
+  assertMatch(codeChallenge ?? "", urlBase64Regex);
+  uri.searchParams.delete("code_challenge");
+
   assertMatchesUrl(
-    getOAuth2Client().code.getAuthorizationUri(),
+    uri,
+    "https://auth.server/auth?response_type=code&client_id=clientId&code_challenge_method=S256",
+  );
+});
+
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing a single scope", async () => {
+  const { uri, codeVerifier } = await getOAuth2Client().code
+    .getAuthorizationUri({
+      scope: "singleScope",
+    });
+
+  const codeChallenge = uri.searchParams.get("code_challenge");
+  assertMatch(codeVerifier, urlBase64Regex);
+  assertMatch(codeChallenge ?? "", urlBase64Regex);
+  uri.searchParams.delete("code_challenge");
+
+  assertMatchesUrl(
+    uri,
+    "https://auth.server/auth?response_type=code&client_id=clientId&scope=singleScope&code_challenge_method=S256",
+  );
+});
+
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing multiple scopes", async () => {
+  const { uri, codeVerifier } = await getOAuth2Client().code
+    .getAuthorizationUri({
+      scope: ["multiple", "scopes"],
+    });
+
+  const codeChallenge = uri.searchParams.get("code_challenge");
+  assertMatch(codeVerifier, urlBase64Regex);
+  assertMatch(codeChallenge ?? "", urlBase64Regex);
+  uri.searchParams.delete("code_challenge");
+
+  assertMatchesUrl(
+    uri,
+    "https://auth.server/auth?response_type=code&client_id=clientId&scope=multiple+scopes&code_challenge_method=S256",
+  );
+});
+
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing a state parameter", async () => {
+  const { uri, codeVerifier } = await getOAuth2Client().code
+    .getAuthorizationUri({
+      state: "someState",
+    });
+
+  const codeChallenge = uri.searchParams.get("code_challenge");
+  assertMatch(codeVerifier, urlBase64Regex);
+  assertMatch(codeChallenge ?? "", urlBase64Regex);
+  uri.searchParams.delete("code_challenge");
+
+  assertMatchesUrl(
+    uri,
+    "https://auth.server/auth?response_type=code&client_id=clientId&state=someState&code_challenge_method=S256",
+  );
+});
+
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri", async () => {
+  const { uri, codeVerifier } = await getOAuth2Client({
+    redirectUri: "https://example.app/redirect",
+  }).code.getAuthorizationUri();
+
+  const codeChallenge = uri.searchParams.get("code_challenge");
+  assertMatch(codeVerifier, urlBase64Regex);
+  assertMatch(codeChallenge ?? "", urlBase64Regex);
+  uri.searchParams.delete("code_challenge");
+
+  assertMatchesUrl(
+    uri,
+    "https://auth.server/auth?response_type=code&client_id=clientId&redirect_uri=https%3A%2F%2Fexample.app%2Fredirect&code_challenge_method=S256",
+  );
+});
+
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and a single scope", async () => {
+  const { uri, codeVerifier } = await getOAuth2Client({
+    redirectUri: "https://example.app/redirect",
+  }).code.getAuthorizationUri({
+    scope: "singleScope",
+  });
+
+  const codeChallenge = uri.searchParams.get("code_challenge");
+  assertMatch(codeVerifier, urlBase64Regex);
+  assertMatch(codeChallenge ?? "", urlBase64Regex);
+  uri.searchParams.delete("code_challenge");
+
+  assertMatchesUrl(
+    uri,
+    "https://auth.server/auth?response_type=code&client_id=clientId&redirect_uri=https%3A%2F%2Fexample.app%2Fredirect&scope=singleScope&code_challenge_method=S256",
+  );
+});
+
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and multiple scopes", async () => {
+  const { uri, codeVerifier } = await getOAuth2Client({
+    redirectUri: "https://example.app/redirect",
+  }).code.getAuthorizationUri({
+    scope: ["multiple", "scopes"],
+  });
+
+  const codeChallenge = uri.searchParams.get("code_challenge");
+  assertMatch(codeVerifier, urlBase64Regex);
+  assertMatch(codeChallenge ?? "", urlBase64Regex);
+  uri.searchParams.delete("code_challenge");
+
+  assertMatchesUrl(
+    uri,
+    "https://auth.server/auth?response_type=code&client_id=clientId&redirect_uri=https%3A%2F%2Fexample.app%2Fredirect&scope=multiple+scopes&code_challenge_method=S256",
+  );
+});
+
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses default scopes if no scope was specified", async () => {
+  const { uri, codeVerifier } = await getOAuth2Client({
+    defaults: { scope: ["default", "scopes"] },
+  }).code.getAuthorizationUri();
+
+  const codeChallenge = uri.searchParams.get("code_challenge");
+  assertMatch(codeVerifier, urlBase64Regex);
+  assertMatch(codeChallenge ?? "", urlBase64Regex);
+  uri.searchParams.delete("code_challenge");
+
+  assertMatchesUrl(
+    uri,
+    "https://auth.server/auth?response_type=code&client_id=clientId&scope=default+scopes&code_challenge_method=S256",
+  );
+});
+
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses specified scopes over default scopes", async () => {
+  const { uri, codeVerifier } = await getOAuth2Client({
+    defaults: { scope: ["default", "scopes"] },
+  }).code.getAuthorizationUri({
+    scope: "notDefault",
+  });
+
+  const codeChallenge = uri.searchParams.get("code_challenge");
+  assertMatch(codeVerifier, urlBase64Regex);
+  assertMatch(codeChallenge ?? "", urlBase64Regex);
+  uri.searchParams.delete("code_challenge");
+
+  assertMatchesUrl(
+    uri,
+    "https://auth.server/auth?response_type=code&client_id=clientId&scope=notDefault&code_challenge_method=S256",
+  );
+});
+
+//#endregion
+
+//#region AuthorizationCodeGrant.getAuthorizationUri successful paths (without PKCE)
+
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works without additional options with PKCE disabled", async () => {
+  assertMatchesUrl(
+    await getOAuth2Client().code.getAuthorizationUri({ disablePkce: true }),
     "https://auth.server/auth?response_type=code&client_id=clientId",
   );
 });
 
-Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing a single scope", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing a single scope with PKCE disabled", async () => {
   assertMatchesUrl(
-    getOAuth2Client().code.getAuthorizationUri({
+    await getOAuth2Client().code.getAuthorizationUri({
       scope: "singleScope",
+      disablePkce: true,
     }),
     "https://auth.server/auth?response_type=code&client_id=clientId&scope=singleScope",
   );
 });
 
-Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing multiple scopes", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing multiple scopes with PKCE disabled", async () => {
   assertMatchesUrl(
-    getOAuth2Client().code.getAuthorizationUri({
+    await getOAuth2Client().code.getAuthorizationUri({
       scope: ["multiple", "scopes"],
+      disablePkce: true,
     }),
     "https://auth.server/auth?response_type=code&client_id=clientId&scope=multiple+scopes",
   );
 });
 
-Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing a state parameter", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works when passing a state parameter with PKCE disabled", async () => {
   assertMatchesUrl(
-    getOAuth2Client().code.getAuthorizationUri({
+    await getOAuth2Client().code.getAuthorizationUri({
       state: "someState",
+      disablePkce: true,
     }),
     "https://auth.server/auth?response_type=code&client_id=clientId&state=someState",
   );
 });
 
-Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri with PKCE disabled", async () => {
   assertMatchesUrl(
-    getOAuth2Client({
+    await getOAuth2Client({
       redirectUri: "https://example.app/redirect",
-    }).code.getAuthorizationUri(),
+    }).code.getAuthorizationUri({ disablePkce: true }),
     "https://auth.server/auth?response_type=code&client_id=clientId&redirect_uri=https%3A%2F%2Fexample.app%2Fredirect",
   );
 });
 
-Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and a single scope", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and a single scope with PKCE disabled", async () => {
   assertMatchesUrl(
-    getOAuth2Client({
+    await getOAuth2Client({
       redirectUri: "https://example.app/redirect",
     }).code.getAuthorizationUri({
       scope: "singleScope",
+      disablePkce: true,
     }),
     "https://auth.server/auth?response_type=code&client_id=clientId&redirect_uri=https%3A%2F%2Fexample.app%2Fredirect&scope=singleScope",
   );
 });
 
-Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and multiple scopes", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and multiple scopes with PKCE disabled", async () => {
   assertMatchesUrl(
-    getOAuth2Client({
+    await getOAuth2Client({
       redirectUri: "https://example.app/redirect",
     }).code.getAuthorizationUri({
       scope: ["multiple", "scopes"],
+      disablePkce: true,
     }),
     "https://auth.server/auth?response_type=code&client_id=clientId&redirect_uri=https%3A%2F%2Fexample.app%2Fredirect&scope=multiple+scopes",
   );
 });
 
-Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses default scopes if no scope was specified", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses default scopes if no scope was specified with PKCE disabled", async () => {
   assertMatchesUrl(
-    getOAuth2Client({
+    await getOAuth2Client({
       defaults: { scope: ["default", "scopes"] },
-    }).code.getAuthorizationUri(),
+    }).code.getAuthorizationUri({ disablePkce: true }),
     "https://auth.server/auth?response_type=code&client_id=clientId&scope=default+scopes",
   );
 });
 
-Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses specified scopes over default scopes", () => {
+Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses specified scopes over default scopes with PKCE disabled", async () => {
   assertMatchesUrl(
-    getOAuth2Client({
+    await getOAuth2Client({
       defaults: { scope: ["default", "scopes"] },
     }).code.getAuthorizationUri({
       scope: "notDefault",
+      disablePkce: true,
     }),
     "https://auth.server/auth?response_type=code&client_id=clientId&scope=notDefault",
   );
@@ -108,15 +276,10 @@ Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses specified scopes over
 
 //#endregion
 
-//#region TODO: AuthorizationCodeGrant.getAuthorization error paths
-
-//#endregion
-
-//#region AuthorizationCodeGrant.getToken
 //#region AuthorizationCodeGrant.getToken error paths
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the received redirectUri does not match the configured one", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       getOAuth2Client({
         redirectUri: "https://example.com/redirect",
@@ -131,7 +294,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the received redirectUri do
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri does not contain any parameters", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       getOAuth2Client().code.getToken(
         buildAccessTokenCallback(),
@@ -142,7 +305,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri does not co
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri contains an error parameter", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       getOAuth2Client().code.getToken(
         buildAccessTokenCallback({
@@ -155,7 +318,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri contains an
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri contains the error, error_description and error_uri parameters and adds them to the error object", async () => {
-  const error = await assertThrowsAsync(
+  const error = await assertRejects(
     () =>
       getOAuth2Client().code.getToken(
         buildAccessTokenCallback({
@@ -175,7 +338,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri contains th
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri doesn't contain a code", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       getOAuth2Client().code.getToken(
         buildAccessTokenCallback({
@@ -189,7 +352,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the callbackUri doesn't con
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if it didn't receive a state and the state validator fails", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       getOAuth2Client().code.getToken(
         buildAccessTokenCallback({
@@ -203,7 +366,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if it didn't receive a state a
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if it didn't receive a state but a state was expected", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       getOAuth2Client().code.getToken(
         buildAccessTokenCallback({
@@ -217,7 +380,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if it didn't receive a state b
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if it received a state that does not match the given state parameter", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       getOAuth2Client().code.getToken(
         buildAccessTokenCallback({
@@ -231,7 +394,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if it received a state that do
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the stateValidator returns false", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       getOAuth2Client().code.getToken(
         buildAccessTokenCallback({
@@ -245,7 +408,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the stateValidator returns 
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a Content-Type other than application/json", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -260,7 +423,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a correctly formatted error", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -275,7 +438,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a 4xx or 5xx and the body doesn't contain an error parameter", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -290,7 +453,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server responded with a
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server's response is not a JSON object", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -302,7 +465,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response is no
     TokenResponseError,
     "Invalid token response: body is not a JSON object",
   );
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -317,7 +480,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response is no
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server's response does not contain a token_type", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -332,7 +495,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response does 
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server response's token_type is not a string", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -352,7 +515,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's token
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server's response does not contain an access_token", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -367,7 +530,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server's response does 
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server response's access_token is not a string", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -387,7 +550,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's acces
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server response's refresh_token property is not a string", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -408,7 +571,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's refre
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server response's expires_in property is not a number", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -429,7 +592,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's expir
 });
 
 Deno.test("AuthorizationCodeGrant.getToken throws if the server response's scope property is not a string", async () => {
-  await assertThrowsAsync(
+  await assertRejects(
     () =>
       mockATResponse(
         () =>
@@ -649,10 +812,8 @@ Deno.test("AuthorizationCodeGrant.getToken uses the default state validator if n
       })),
   );
 
-  assertEquals(
-    defaultValidator.calls,
-    [{ args: ["some_state"], returned: true }],
-  );
+  assertSpyCall(defaultValidator, 0, { args: ["some_state"], returned: true });
+  assertSpyCalls(defaultValidator, 1);
 });
 
 Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over the default validator", async () => {
@@ -671,8 +832,9 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over 
       ),
   );
 
-  assertEquals(defaultValidator.calls, []);
-  assertEquals(validator.calls, [{ args: ["some_state"], returned: true }]);
+  assertSpyCalls(defaultValidator, 0);
+  assertSpyCall(validator, 0, { args: ["some_state"], returned: true });
+  assertSpyCalls(validator, 1);
 });
 
 Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over the passed state", async () => {
@@ -691,9 +853,9 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over 
       ),
   );
 
-  assertEquals(defaultValidator.calls, []);
-  assertEquals(validator.calls, [{ args: ["some_state"], returned: true }]);
+  assertSpyCalls(defaultValidator, 0);
+  assertSpyCall(validator, 0, { args: ["some_state"], returned: true });
+  assertSpyCalls(validator, 1);
 });
 
-//#endregion
 //#endregion

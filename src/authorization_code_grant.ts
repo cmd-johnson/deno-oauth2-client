@@ -1,9 +1,10 @@
 import type { OAuth2Client } from "./oauth2_client.ts";
 import { AuthorizationResponseError, OAuth2ResponseError } from "./errors.ts";
-import { RequestOptions, Tokens } from "./types.ts";
+import type { RequestOptions, Tokens } from "./types.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";
+import { createPkceChallenge } from "./pkce.ts";
 
-export interface GetUriOptions {
+interface GetUriOptionsWithPKCE {
   /**
    * State parameter to send along with the authorization request.
    *
@@ -17,6 +18,19 @@ export interface GetUriOptions {
    * https://tools.ietf.org/html/rfc6749#section-3.3
    */
   scope?: string | string[];
+  /** Set to true to opt out of using PKCE */
+  disablePkce?: false;
+}
+
+type GetUriOptionsWithoutPKCE =
+  & Omit<GetUriOptionsWithPKCE, "disablePkce">
+  & { disablePkce: true };
+
+export type GetUriOptions = GetUriOptionsWithPKCE | GetUriOptionsWithoutPKCE;
+
+export interface AuthorizationUri {
+  uri: URL;
+  codeVerifier: string;
 }
 
 export interface GetTokenOptions {
@@ -35,6 +49,10 @@ export interface GetTokenOptions {
    * The option object's state value is ignored when a stateValidator is passed.
    */
   stateValidator?: (state: string | null) => boolean;
+  /**
+   * When using PKCE, the code verifier that you got by calling getAuthorizationUri
+   */
+  codeVerifier?: string;
   /** Request options used when making the access token request. */
   requestOptions?: RequestOptions;
 }
@@ -49,8 +67,24 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     super(client);
   }
 
-  /** Builds a URI you can redirect a user to to make the authorization request. */
-  public getAuthorizationUri(options: GetUriOptions = {}): URL {
+  /**
+   * Builds a URI you can redirect a user to to make the authorization request.
+   *
+   * By default, {@link https://www.rfc-editor.org/rfc/rfc7636 PKCE} will be used.
+   * You can opt out of PKCE by passing `{ disablePkce: true }` in the options.
+   *
+   * When using PKCE it is your responsibility to store the returned `codeVerifier`
+   * and associate it with the user's session just like with the `state` parameter.
+   * You have to pass it to the `getToken()` request when you receive the
+   * authorization callback or the token request will fail.
+   */
+  public getAuthorizationUri(
+    options?: GetUriOptionsWithPKCE,
+  ): Promise<AuthorizationUri>;
+  public getAuthorizationUri(options: GetUriOptionsWithoutPKCE): Promise<URL>;
+  public async getAuthorizationUri(
+    options: GetUriOptions = {},
+  ): Promise<URL | AuthorizationUri> {
     const params = new URLSearchParams();
     params.set("response_type", "code");
     params.set("client_id", this.client.config.clientId);
@@ -64,7 +98,18 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     if (options.state) {
       params.set("state", options.state);
     }
-    return new URL(`?${params}`, this.client.config.authorizationEndpointUri);
+
+    if (options.disablePkce === true) {
+      return new URL(`?${params}`, this.client.config.authorizationEndpointUri);
+    }
+
+    const challenge = await createPkceChallenge();
+    params.set("code_challenge", challenge.codeChallenge);
+    params.set("code_challenge_method", challenge.codeChallengeMethod);
+    return {
+      uri: new URL(`?${params}`, this.client.config.authorizationEndpointUri),
+      codeVerifier: challenge.codeVerifier,
+    };
   }
 
   /**
@@ -85,6 +130,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
 
     const request = this.buildAccessTokenRequest(
       validated.code,
+      options.codeVerifier,
       options.requestOptions,
     );
 
@@ -152,6 +198,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
 
   private buildAccessTokenRequest(
     code: string,
+    codeVerifier?: string,
     requestOptions: RequestOptions = {},
   ): Request {
     const body: Record<string, string> = {
@@ -161,6 +208,10 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     const headers: Record<string, string> = {
       "Accept": "application/json",
     };
+
+    if (typeof codeVerifier === "string") {
+      body.code_verifier = codeVerifier;
+    }
 
     if (typeof this.client.config.redirectUri === "string") {
       body.redirect_uri = this.client.config.redirectUri;
