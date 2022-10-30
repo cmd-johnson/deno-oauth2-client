@@ -8,7 +8,7 @@ Inspired by [js-client-oauth2](https://github.com/mulesoft/js-client-oauth2/).
 
 This module tries not to make assumptions on your use-cases.
 As such, it
-- has no external dependencies (not even Deno's standard library)
+- has no external dependencies outside of Deno's standard library
 - can be used with Deno's [http module](https://deno.land/std@0.71.0/http) or any other library for handling http requests, like [oak](https://deno.land/x/oak)
 - only implements OAuth 2.0 grants, letting you take care of storing and retrieving sessions, managing state parameters, etc.
 
@@ -88,3 +88,36 @@ await app.listen({ port: 8000 });
 ### More Examples
 
 For more examples, check out the examples directory.
+
+## Migration
+
+### `v0.*.*` -> `v1.*.*`
+
+With `v1.0.0`:
+- we introduced PKCE by default for the Authorization Code Grant
+- enabled `stateValidator` callbacks to return a Promise, to allow for e.g. accessing a database
+- cleaned up interface names to prevent name clashes between e.g. the `AuthorizationCodeGrant` and `ImplicitGrant` option objects.
+
+#### `AuthorizationCodeGrant`
+
+- The `GetUriOptions` interface was renamed to `AuthorizationUriOptions`
+- `getAuthorizationUri(...)` now always returns a `Promise<{ uri: URL }>` instead of a plain `URL`.
+    - when using PKCE (which is now the default), `getAuthorizationUri(...)` returns an object containing both an URI and the `codeVerifier` that you'll have to pass to the `getToken(...)` call inside the OAuth 2.0 redirection URI handler. Check out the examples on how to achieve that by using session cookies.
+    - while you should always use PKCE if possible, there are still OAuth 2.0 servers that don't support it. To opt out of PKCE, pass `{ disablePkce: true }` to `getAuthorizationUri`.
+
+#### `ClientCredentialsGrant`
+
+- The `GetClientCredentialsTokenOptions` interface was renamed to `ClientCredentialsTokenOptions`
+
+#### `ImplicitGrant`
+
+- The `GetUriOptions` interface was renamed to `ImplicitUriOptions`
+- The `GetTokenOptions` interface was renamed to `ImplicitTokenOptions`
+
+#### `ResourceOwnerPasswordCredentialsGrant`
+
+- The `GetROPCTokenOptions` interface was renamed to `ResourceOwnerPasswordCredentialsTokenOptions`
+
+#### `RefreshTokenGrant`
+
+- No changes necessary
