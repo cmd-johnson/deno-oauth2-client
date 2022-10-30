@@ -22,12 +22,13 @@ Currently supported OAuth 2.0 grants:
 ### GitHub API example using [oak](https://deno.land/x/oak)
 
 ```ts
-import { Application, Router } from "https://deno.land/x/oak@v6.3.0/mod.ts";
+import { Application, Router } from "https://deno.land/x/oak@v11.1.0/mod.ts";
+import { Session } from "https://deno.land/x/oak_sessions@v4.0.5/mod.ts";
 import { OAuth2Client } from "https://deno.land/x/oauth2_client/mod.ts";
 
 const oauth2Client = new OAuth2Client({
-  clientId: "<your client id>",
-  clientSecret: "<your client secret>",
+  clientId: Deno.env.get("CLIENT_ID")!,
+  clientSecret: Deno.env.get("CLIENT_SECRET")!,
   authorizationEndpointUri: "https://github.com/login/oauth/authorize",
   tokenUri: "https://github.com/login/oauth/access_token",
   redirectUri: "http://localhost:8000/oauth2/callback",
@@ -36,15 +37,32 @@ const oauth2Client = new OAuth2Client({
   },
 });
 
-const router = new Router();
-router.get("/login", (ctx) => {
-  ctx.response.redirect(
-    oauth2Client.code.getAuthorizationUri(),
-  );
+type AppState = {
+  session: Session;
+};
+
+const router = new Router<AppState>();
+router.get("/login", async (ctx) => {
+  // Construct the URL for the authorization redirect and get a PKCE codeVerifier
+  const { uri, codeVerifier } = await oauth2Client.code.getAuthorizationUri();
+
+  // Store both the state and codeVerifier in the user session
+  ctx.state.session.flash("codeVerifier", codeVerifier);
+
+  // Redirect the user to the authorization endpoint
+  ctx.response.redirect(uri);
 });
 router.get("/oauth2/callback", async (ctx) => {
+  // Make sure the codeVerifier is present for the user's session
+  const codeVerifier = ctx.state.session.get("codeVerifier");
+  if (typeof codeVerifier !== "string") {
+    throw new Error("invalid codeVerifier");
+  }
+
   // Exchange the authorization code for an access token
-  const tokens = await oauth2Client.code.getToken(ctx.request.url);
+  const tokens = await oauth2Client.code.getToken(ctx.request.url, {
+    codeVerifier,
+  });
 
   // Use the access token to make an authenticated API request
   const userResponse = await fetch("https://api.github.com/user", {
@@ -57,7 +75,8 @@ router.get("/oauth2/callback", async (ctx) => {
   ctx.response.body = `Hello, ${login}!`;
 });
 
-const app = new Application();
+const app = new Application<AppState>();
+app.use(Session.initMiddleware());
 app.use(router.allowedMethods(), router.routes());
 
 await app.listen({ port: 8000 });
