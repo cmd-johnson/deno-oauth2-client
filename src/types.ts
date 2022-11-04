@@ -47,3 +47,8 @@ export interface Tokens {
    */
   scope?: string[];
 }
+
+export interface ResponseWithParsedBody extends Response {
+  // deno-lint-ignore no-explicit-any
+  parsedBody?: any;
+}

@@ -1,6 +1,6 @@
 import { OAuth2ResponseError, TokenResponseError } from "./errors.ts";
 import { OAuth2Client } from "./oauth2_client.ts";
-import { RequestOptions, Tokens } from "./types.ts";
+import { RequestOptions, ResponseWithParsedBody, Tokens } from "./types.ts";
 
 interface AccessTokenResponse {
   "access_token": string;
@@ -67,7 +67,7 @@ export abstract class OAuth2GrantBase {
     return url;
   }
 
-  protected async parseTokenResponse(response: Response): Promise<Tokens> {
+  protected async parseTokenResponse(response: ResponseWithParsedBody): Promise<Tokens> {
     if (!response.ok) {
       throw await this.getTokenResponseError(response);
     }
@@ -75,6 +75,7 @@ export abstract class OAuth2GrantBase {
     let body: AccessTokenResponse;
     try {
       body = await response.json();
+      response.parsedBody = body;
     } catch {
       throw new TokenResponseError(
         "Response is not JSON encoded",
@@ -146,10 +147,11 @@ export abstract class OAuth2GrantBase {
 
   /** Tries to build an AuthError from the response and defaults to AuthServerResponseError if that fails. */
   private async getTokenResponseError(
-    response: Response,
+    response: ResponseWithParsedBody,
   ): Promise<OAuth2ResponseError | TokenResponseError> {
     try {
       const body = await response.json();
+      response.parsedBody = body;
       if (typeof body.error !== "string") {
         throw new TypeError("body should contain an error");
       }
