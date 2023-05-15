@@ -156,6 +156,23 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     url: URL,
     options: AuthorizationCodeTokenOptions,
   ): Promise<{ code: string; state?: string }> {
+    const params = new URLSearchParams(url.search || "");
+
+    const state = params.get("state");
+    const stateValidator = options.stateValidator ||
+      (options.state && ((s) => s === options.state)) ||
+      this.client.config.defaults?.stateValidator;
+
+    if (stateValidator && !await stateValidator(state)) {
+      if (state === null) {
+        throw new AuthorizationResponseError("Missing state");
+      } else {
+        throw new AuthorizationResponseError(
+          `Invalid state: ${params.get("state")}`,
+        );
+      }
+    }
+
     if (typeof this.client.config.redirectUri === "string") {
       const expectedUrl = new URL(this.client.config.redirectUri);
 
@@ -175,8 +192,6 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
       );
     }
 
-    const params = new URLSearchParams(url.search || "");
-
     if (params.get("error") !== null) {
       throw OAuth2ResponseError.fromURLSearchParams(params);
     }
@@ -186,21 +201,6 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
       throw new AuthorizationResponseError(
         "Missing code, unable to request token",
       );
-    }
-
-    const state = params.get("state");
-    const stateValidator = options.stateValidator ||
-      (options.state && ((s) => s === options.state)) ||
-      this.client.config.defaults?.stateValidator;
-
-    if (stateValidator && !await stateValidator(state)) {
-      if (state === null) {
-        throw new AuthorizationResponseError("Missing state");
-      } else {
-        throw new AuthorizationResponseError(
-          `Invalid state: ${params.get("state")}`,
-        );
-      }
     }
 
     if (state) {
