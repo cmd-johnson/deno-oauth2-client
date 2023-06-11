@@ -74,7 +74,7 @@ export abstract class OAuth2GrantBase {
 
     let body: AccessTokenResponse;
     try {
-      body = await response.json();
+      body = await response.clone().json();
     } catch {
       throw new TokenResponseError(
         "Response is not JSON encoded",
