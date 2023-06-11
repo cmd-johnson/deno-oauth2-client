@@ -33,7 +33,9 @@ export class RefreshTokenGrant extends OAuth2GrantBase {
       body.scope = options.scope.join(" ");
     }
 
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      "Accept": "application/json",
+    };
     if (typeof this.client.config.clientSecret === "string") {
       // Note: RFC 6749 doesn't really say how a non-confidential client should
       // prove its identity when making a refresh token request, so we just don't
