@@ -57,7 +57,7 @@ interface MockAccessTokenResponseResult {
 }
 
 export async function mockATResponse(
-  request: (() => Promise<Tokens>),
+  request: () => Promise<Tokens>,
   response?: MockAccessTokenResponse,
 ): Promise<MockAccessTokenResponseResult> {
   const body = typeof response?.body === "string"

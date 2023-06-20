@@ -45,18 +45,18 @@ export abstract class OAuth2GrantBase {
     return new Request(url.toString(), {
       method,
       headers: new Headers({
-        ...{
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+        "Content-Type": "application/x-www-form-urlencoded",
         ...(clientDefaults?.headers ?? {}),
         ...(options.headers ?? {}),
         ...(overrideOptions.headers ?? {}),
       }),
-      body: method !== 'HEAD' && method !== 'GET' && new URLSearchParams({
-        ...(clientDefaults?.body ?? {}),
-        ...(options.body ?? {}),
-        ...(overrideOptions.body ?? {}),
-      }).toString() || undefined,
+      body: method !== "HEAD" && method !== "GET"
+        ? new URLSearchParams({
+          ...(clientDefaults?.body ?? {}),
+          ...(options.body ?? {}),
+          ...(overrideOptions.body ?? {}),
+        }).toString()
+        : undefined,
     });
   }
 

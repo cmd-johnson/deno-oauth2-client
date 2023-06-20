@@ -3,9 +3,9 @@
   "deno.unstable": true,
   "deno.lint": true,
   "deno.import_intellisense_origins": {
-    "https://deno.land": true,
+    "https://deno.land": true
   },
   "[typescript]": {
-    "editor.defaultFormatter": "denoland.vscode-deno",
+    "editor.defaultFormatter": "denoland.vscode-deno"
   }
 }
