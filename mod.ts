@@ -1,6 +1,6 @@
 export type { RequestOptions, Tokens } from "./src/types.ts";
 
-export type {
+export {
   AuthorizationResponseError,
   MissingClientSecretError,
   OAuth2ResponseError,
