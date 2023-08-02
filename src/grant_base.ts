@@ -67,7 +67,11 @@ export abstract class OAuth2GrantBase {
     return url;
   }
 
-  protected async parseTokenResponse(response: Response): Promise<Tokens> {
+  protected async parseTokenResponse(
+    response: Response,
+  ): Promise<
+    { tokens: Tokens; body: AccessTokenResponse & Record<string, unknown> }
+  > {
     if (!response.ok) {
       throw await this.getTokenResponseError(response);
     }
@@ -141,11 +145,14 @@ export abstract class OAuth2GrantBase {
       tokens.scope = body.scope.split(" ");
     }
 
-    return tokens;
+    return {
+      tokens,
+      body: body as AccessTokenResponse & Record<string, unknown>,
+    };
   }
 
   /** Tries to build an AuthError from the response and defaults to AuthServerResponseError if that fails. */
-  private async getTokenResponseError(
+  protected async getTokenResponseError(
     response: Response,
   ): Promise<OAuth2ResponseError | TokenResponseError> {
     try {

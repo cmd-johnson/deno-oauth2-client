@@ -36,10 +36,11 @@ export class ClientCredentialsGrant extends OAuth2GrantBase {
 
     const accessTokenResponse = await fetch(request);
 
-    return this.parseTokenResponse(accessTokenResponse);
+    const { tokens } = await this.parseTokenResponse(accessTokenResponse);
+    return tokens;
   }
 
-  private buildTokenRequest(
+  protected buildTokenRequest(
     options: ClientCredentialsTokenOptions,
   ): Request {
     const { clientId, clientSecret } = this.config;

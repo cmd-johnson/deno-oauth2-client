@@ -52,6 +52,7 @@ export class RefreshTokenGrant extends OAuth2GrantBase {
 
     const accessTokenResponse = await fetch(req);
 
-    return this.parseTokenResponse(accessTokenResponse);
+    const { tokens } = await this.parseTokenResponse(accessTokenResponse);
+    return tokens;
   }
 }

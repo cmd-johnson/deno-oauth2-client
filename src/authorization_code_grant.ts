@@ -4,7 +4,7 @@ import type { RequestOptions, Tokens } from "./types.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";
 import { createPkceChallenge } from "./pkce.ts";
 
-interface AuthorizationUriOptionsWithPKCE {
+export interface AuthorizationUriOptionsWithPKCE {
   /**
    * State parameter to send along with the authorization request.
    *
@@ -22,7 +22,7 @@ interface AuthorizationUriOptionsWithPKCE {
   disablePkce?: false;
 }
 
-type AuthorizationUriOptionsWithoutPKCE =
+export type AuthorizationUriOptionsWithoutPKCE =
   & Omit<AuthorizationUriOptionsWithPKCE, "disablePkce">
   & { disablePkce: true };
 
@@ -149,10 +149,11 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
 
     const accessTokenResponse = await fetch(request);
 
-    return this.parseTokenResponse(accessTokenResponse);
+    const { tokens } = await this.parseTokenResponse(accessTokenResponse);
+    return tokens;
   }
 
-  private async validateAuthorizationResponse(
+  protected async validateAuthorizationResponse(
     url: URL,
     options: AuthorizationCodeTokenOptions,
   ): Promise<{ code: string; state?: string }> {
@@ -209,7 +210,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     return { code };
   }
 
-  private buildAccessTokenRequest(
+  protected buildAccessTokenRequest(
     code: string,
     codeVerifier?: string,
     requestOptions: RequestOptions = {},

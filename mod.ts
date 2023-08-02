@@ -15,6 +15,8 @@ export type {
   AuthorizationCodeTokenOptions,
   AuthorizationUri,
   AuthorizationUriOptions,
+  AuthorizationUriOptionsWithoutPKCE,
+  AuthorizationUriOptionsWithPKCE,
   AuthorizationUriWithoutVerifier,
   AuthorizationUriWithVerifier,
 } from "./src/authorization_code_grant.ts";
