@@ -1,5 +1,5 @@
 import { OAuth2ResponseError, TokenResponseError } from "./errors.ts";
-import { OAuth2Client } from "./oauth2_client.ts";
+import { OAuth2ClientConfig } from "./oauth2_client.ts";
 import { RequestOptions, Tokens } from "./types.ts";
 
 interface AccessTokenResponse {
@@ -17,7 +17,7 @@ interface AccessTokenResponse {
  */
 export abstract class OAuth2GrantBase {
   constructor(
-    protected readonly client: OAuth2Client,
+    protected readonly config: OAuth2ClientConfig,
   ) {}
 
   protected buildRequest(
@@ -27,7 +27,7 @@ export abstract class OAuth2GrantBase {
   ): Request {
     const url = this.toUrl(baseUrl);
 
-    const clientDefaults = this.client.config.defaults?.requestOptions;
+    const clientDefaults = this.config.defaults?.requestOptions;
 
     const urlParams: Record<string, string> = {
       ...(clientDefaults?.urlParams),

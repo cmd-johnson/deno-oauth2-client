@@ -1,6 +1,6 @@
 import { MissingClientSecretError } from "./errors.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";
-import type { OAuth2Client } from "./oauth2_client.ts";
+import type { OAuth2ClientConfig } from "./oauth2_client.ts";
 import { RequestOptions, Tokens } from "./types.ts";
 
 export interface ClientCredentialsTokenOptions {
@@ -22,8 +22,8 @@ export interface ClientCredentialsTokenOptions {
  * See https://tools.ietf.org/html/rfc6749#section-4.4
  */
 export class ClientCredentialsGrant extends OAuth2GrantBase {
-  constructor(client: OAuth2Client) {
-    super(client);
+  constructor(config: OAuth2ClientConfig) {
+    super(config);
   }
 
   /**
@@ -42,7 +42,7 @@ export class ClientCredentialsGrant extends OAuth2GrantBase {
   private buildTokenRequest(
     options: ClientCredentialsTokenOptions,
   ): Request {
-    const { clientId, clientSecret } = this.client.config;
+    const { clientId, clientSecret } = this.config;
     if (typeof clientSecret !== "string") {
       throw new MissingClientSecretError();
     }
@@ -56,7 +56,7 @@ export class ClientCredentialsGrant extends OAuth2GrantBase {
       "Authorization": `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
     };
 
-    const scope = options.scope ?? this.client.config.defaults?.scope;
+    const scope = options.scope ?? this.config.defaults?.scope;
     if (scope) {
       if (Array.isArray(scope)) {
         body.scope = scope.join(" ");
@@ -65,7 +65,7 @@ export class ClientCredentialsGrant extends OAuth2GrantBase {
       }
     }
 
-    return this.buildRequest(this.client.config.tokenUri, {
+    return this.buildRequest(this.config.tokenUri, {
       method: "POST",
       headers,
       body,
