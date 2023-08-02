@@ -12,6 +12,13 @@ import { TokenResponseError } from "../errors.ts";
 import { OIDCClientConfig } from "./oidc_client.ts";
 import { IDToken, JWTPayload, OIDCTokens } from "./types.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.161.0/encoding/base64.ts";
+import {
+  isNumber,
+  isString,
+  isStringArray,
+  isStringOrStringArray,
+  optionallyIncludesClaim,
+} from "./validation.ts";
 
 type ValueOrArray<T> = T | T[];
 function valueOrArrayToArray<T>(
@@ -297,19 +304,6 @@ export class AuthorizationCodeFlow extends AuthorizationCodeGrant {
   }
 }
 
-function isString(v: unknown): v is string {
-  return typeof v === "string";
-}
-function isStringArray(v: unknown): v is string[] {
-  return Array.isArray(v) && v.every(isString);
-}
-function isStringOrStringArray(v: unknown): v is string | string[] {
-  return Array.isArray(v) ? v.every(isString) : isString(v);
-}
-function isNumber(v: unknown): v is number {
-  return typeof v === "number";
-}
-
 function requireIDTokenClaim<
   P extends Record<string, unknown>,
   K extends string,
@@ -343,10 +337,7 @@ function requireOptionalIDTokenClaim<
   isValid: (value: unknown) => value is T,
   tokenResponse: Response,
 ): asserts payload is P & { [Key in K]?: T } {
-  if (!(key in payload)) {
-    return;
-  }
-  if (!isValid(payload[key])) {
+  if (!optionallyIncludesClaim(payload, key, isValid)) {
     throw new TokenResponseError(
       `id_token contains an invalid ${key} claim`,
       tokenResponse,
