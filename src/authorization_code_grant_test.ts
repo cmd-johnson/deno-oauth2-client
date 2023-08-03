@@ -593,7 +593,7 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's expir
   );
 });
 
-Deno.test("AuthorizationCodeGrant.getToken throws if the server response's scope property is not a string", async () => {
+Deno.test("AuthorizationCodeGrant.getToken throws if the server response's scope property is not a string or array of strings", async () => {
   await assertRejects(
     () =>
       mockATResponse(
@@ -605,12 +605,30 @@ Deno.test("AuthorizationCodeGrant.getToken throws if the server response's scope
           body: {
             access_token: "at",
             token_type: "tt",
-            scope: ["scope1", "scope2"] as any,
+            scope: 1 as any,
           },
         },
       ),
     TokenResponseError,
     "Invalid token response: scope is not a string",
+  );
+  await assertRejects(
+    () =>
+      mockATResponse(
+        () =>
+          getOAuth2Client().code.getToken(buildAccessTokenCallback({
+            params: { code: "authCode" },
+          })),
+        {
+          body: {
+            access_token: "at",
+            token_type: "tt",
+            scope: ["scope1", 2] as any,
+          },
+        },
+      ),
+    TokenResponseError,
+    "Invalid token response: scopes are not a string",
   );
 });
 
