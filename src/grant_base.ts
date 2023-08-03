@@ -119,9 +119,21 @@ export abstract class OAuth2GrantBase {
         response,
       );
     }
-    if (body.scope !== undefined && typeof body.scope !== "string") {
+    if (
+      body.scope !== undefined && typeof body.scope !== "string" &&
+      !Array.isArray(body.scope)
+    ) {
       throw new TokenResponseError(
         "scope is not a string",
+        response,
+      );
+    }
+    if (
+      Array.isArray(body.scope) &&
+      body.scope.some((value) => typeof value !== "string")
+    ) {
+      throw new TokenResponseError(
+        "scopes are not a string",
         response,
       );
     }
@@ -138,7 +150,11 @@ export abstract class OAuth2GrantBase {
       tokens.expiresIn = body.expires_in;
     }
     if (body.scope) {
-      tokens.scope = body.scope.split(" ");
+      if (typeof body.scope === "string") {
+        tokens.scope = body.scope.split(" ");
+      } else {
+        tokens.scope = body.scope;
+      }
     }
 
     return tokens;
