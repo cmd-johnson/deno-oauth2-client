@@ -78,7 +78,11 @@ export class OIDCClient {
   protected async getUserInfoResponsePayload(
     response: Response,
   ): Promise<Record<string, unknown>> {
-    const contentType = response.headers.get("Content-Type");
+    const contentType = response.headers.get("Content-Type")
+      ?.split(";")
+      .at(0)
+      ?.trimEnd();
+
     const jsonContentType = "application/json";
     const jwtContentType = "application/jwt";
 
