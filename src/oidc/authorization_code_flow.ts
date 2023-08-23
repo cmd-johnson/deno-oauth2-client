@@ -240,9 +240,9 @@ export class AuthorizationCodeFlow extends AuthorizationCodeGrant {
 
     const hash = await crypto.subtle.digest(hashAlg, accessTokenBytes);
     const leftHalf = hash.slice(0, hash.byteLength / 2);
-    const base64EncodedHash = base64Encode(leftHalf);
+    const base64EncodedHash = base64Encode(leftHalf).replaceAll("=", "");
 
-    if (base64EncodedHash !== atHash) {
+    if (base64EncodedHash !== atHash.replaceAll("=", "")) {
       throw new TokenResponseError(
         `id_token at_hash claim does not match access_token hash`,
         tokenResponse,
@@ -271,7 +271,7 @@ export class AuthorizationCodeFlow extends AuthorizationCodeGrant {
     };
     requireIDTokenClaim(payload, "aud", isValidAud, tokenResponse);
     requireIDTokenClaim(payload, "exp", isNumber, tokenResponse);
-    if (payload.exp >= currentTimestamp) {
+    if (payload.exp <= currentTimestamp) {
       throw new TokenResponseError(
         "id_token is already expired",
         tokenResponse,
