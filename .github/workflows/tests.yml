@@ -34,21 +34,6 @@ jobs:
       - name: Print Coverage
         run: deno coverage cov_profile
 
-  validateBundle:
-    strategy:
-      matrix:
-        deno: ["v1.x", "canary"]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Setup repo
-        uses: actions/checkout@v3
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@v1
-        with:
-          deno-version: ${{ matrix.deno }}
-
       - name: Bundle code
         run: deno bundle mod.ts > mod.bundle.js
 
