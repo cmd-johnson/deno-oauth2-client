@@ -4,7 +4,7 @@ import {
   assertMatch,
   assertNotMatch,
   assertRejects,
-} from "https://deno.land/std@0.161.0/testing/asserts.ts";
+} from "https://deno.land/std@0.203.0/assert/mod.ts";
 
 import { OAuth2ResponseError, TokenResponseError } from "./errors.ts";
 import { getOAuth2Client, mockATResponse } from "./test_utils.ts";

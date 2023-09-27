@@ -1,4 +1,4 @@
-import { encode } from "https://deno.land/std@0.161.0/encoding/base64.ts";
+import { encodeBase64 } from "https://deno.land/std@0.203.0/encoding/base64.ts";
 
 export interface PkceChallenge {
   codeVerifier: string;
@@ -11,7 +11,7 @@ export interface PkceChallenge {
  * in accordance with https://www.rfc-editor.org/rfc/rfc7636#appendix-A
  */
 function encodeUrlSafe(data: string | ArrayBuffer): string {
-  return encode(data)
+  return encodeBase64(data)
     .replace(/=/g, "")
     .replace(/\+/g, "-")
     .replace(/\//g, "_");
