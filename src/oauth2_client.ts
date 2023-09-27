@@ -38,37 +38,43 @@ export class OAuth2Client {
    *
    * See RFC6749, section 4.1.
    */
-  public code = new AuthorizationCodeGrant(this);
+  public code: AuthorizationCodeGrant;
 
   /**
    * Implements the Implicit Grant.
    *
    * See RFC6749, section 4.2.
    */
-  public implicit = new ImplicitGrant(this);
+  public implicit: ImplicitGrant;
 
   /**
    * Implements the Resource Owner Password Credentials Grant.
    *
    * See RFC6749, section 4.3.
    */
-  public ropc = new ResourceOwnerPasswordCredentialsGrant(this);
+  public ropc: ResourceOwnerPasswordCredentialsGrant;
 
   /**
    * Implements the Resource Owner Password Credentials Grant.
    *
    * See RFC6749, section 4.4.
    */
-  public clientCredentials = new ClientCredentialsGrant(this);
+  public clientCredentials: ClientCredentialsGrant;
 
   /**
    * Implements the Refresh Token Grant.
    *
    * See RFC6749, section 6.
    */
-  public refreshToken = new RefreshTokenGrant(this);
+  public refreshToken: RefreshTokenGrant;
 
   constructor(
     public readonly config: Readonly<OAuth2ClientConfig>,
-  ) {}
+  ) {
+    this.code = new AuthorizationCodeGrant(this.config);
+    this.implicit = new ImplicitGrant(this.config);
+    this.ropc = new ResourceOwnerPasswordCredentialsGrant(this.config);
+    this.clientCredentials = new ClientCredentialsGrant(this.config);
+    this.refreshToken = new RefreshTokenGrant(this.config);
+  }
 }

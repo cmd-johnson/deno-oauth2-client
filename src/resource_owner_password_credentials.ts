@@ -1,5 +1,5 @@
 import { OAuth2GrantBase } from "./grant_base.ts";
-import type { OAuth2Client } from "./oauth2_client.ts";
+import type { OAuth2ClientConfig } from "./oauth2_client.ts";
 import type { RequestOptions, Tokens } from "./types.ts";
 
 export interface ResourceOwnerPasswordCredentialsTokenOptions {
@@ -24,8 +24,8 @@ export interface ResourceOwnerPasswordCredentialsTokenOptions {
  * See https://tools.ietf.org/html/rfc6749#section-4.3
  */
 export class ResourceOwnerPasswordCredentialsGrant extends OAuth2GrantBase {
-  constructor(client: OAuth2Client) {
-    super(client);
+  constructor(config: OAuth2ClientConfig) {
+    super(config);
   }
 
   /**
@@ -38,10 +38,11 @@ export class ResourceOwnerPasswordCredentialsGrant extends OAuth2GrantBase {
 
     const accessTokenResponse = await fetch(request);
 
-    return this.parseTokenResponse(accessTokenResponse);
+    const { tokens } = await this.parseTokenResponse(accessTokenResponse);
+    return tokens;
   }
 
-  private buildTokenRequest(
+  protected buildTokenRequest(
     options: ResourceOwnerPasswordCredentialsTokenOptions,
   ): Request {
     const body: Record<string, string> = {
@@ -53,7 +54,7 @@ export class ResourceOwnerPasswordCredentialsGrant extends OAuth2GrantBase {
       "Accept": "application/json",
     };
 
-    const scope = options.scope ?? this.client.config.defaults?.scope;
+    const scope = options.scope ?? this.config.defaults?.scope;
     if (scope) {
       if (Array.isArray(scope)) {
         body.scope = scope.join(" ");
@@ -62,16 +63,16 @@ export class ResourceOwnerPasswordCredentialsGrant extends OAuth2GrantBase {
       }
     }
 
-    if (typeof this.client.config.clientSecret === "string") {
+    if (typeof this.config.clientSecret === "string") {
       // We have a client secret, authenticate using HTTP Basic Auth as described in RFC6749 Section 2.3.1.
-      const { clientId, clientSecret } = this.client.config;
+      const { clientId, clientSecret } = this.config;
       headers.Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
     } else {
       // This appears to be a public client, include the client ID in the body instead
-      body.client_id = this.client.config.clientId;
+      body.client_id = this.config.clientId;
     }
 
-    return this.buildRequest(this.client.config.tokenUri, {
+    return this.buildRequest(this.config.tokenUri, {
       method: "POST",
       headers,
       body,

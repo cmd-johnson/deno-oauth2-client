@@ -1,10 +1,10 @@
-import type { OAuth2Client } from "./oauth2_client.ts";
+import type { OAuth2ClientConfig } from "./oauth2_client.ts";
 import { AuthorizationResponseError, OAuth2ResponseError } from "./errors.ts";
 import type { RequestOptions, Tokens } from "./types.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";
 import { createPkceChallenge } from "./pkce.ts";
 
-interface AuthorizationUriOptionsWithPKCE {
+export interface AuthorizationUriOptionsWithPKCE {
   /**
    * State parameter to send along with the authorization request.
    *
@@ -22,7 +22,7 @@ interface AuthorizationUriOptionsWithPKCE {
   disablePkce?: false;
 }
 
-type AuthorizationUriOptionsWithoutPKCE =
+export type AuthorizationUriOptionsWithoutPKCE =
   & Omit<AuthorizationUriOptionsWithPKCE, "disablePkce">
   & { disablePkce: true };
 
@@ -72,8 +72,8 @@ export interface AuthorizationCodeTokenOptions {
  * See https://tools.ietf.org/html/rfc6749#section-4.1
  */
 export class AuthorizationCodeGrant extends OAuth2GrantBase {
-  constructor(client: OAuth2Client) {
-    super(client);
+  constructor(config: OAuth2ClientConfig) {
+    super(config);
   }
 
   /**
@@ -98,11 +98,11 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
   ): Promise<AuthorizationUri> {
     const params = new URLSearchParams();
     params.set("response_type", "code");
-    params.set("client_id", this.client.config.clientId);
-    if (typeof this.client.config.redirectUri === "string") {
-      params.set("redirect_uri", this.client.config.redirectUri);
+    params.set("client_id", this.config.clientId);
+    if (typeof this.config.redirectUri === "string") {
+      params.set("redirect_uri", this.config.redirectUri);
     }
-    const scope = options.scope ?? this.client.config.defaults?.scope;
+    const scope = options.scope ?? this.config.defaults?.scope;
     if (scope) {
       params.set("scope", Array.isArray(scope) ? scope.join(" ") : scope);
     }
@@ -112,7 +112,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
 
     if (options.disablePkce === true) {
       return {
-        uri: new URL(`?${params}`, this.client.config.authorizationEndpointUri),
+        uri: new URL(`?${params}`, this.config.authorizationEndpointUri),
       };
     }
 
@@ -120,7 +120,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     params.set("code_challenge", challenge.codeChallenge);
     params.set("code_challenge_method", challenge.codeChallengeMethod);
     return {
-      uri: new URL(`?${params}`, this.client.config.authorizationEndpointUri),
+      uri: new URL(`?${params}`, this.config.authorizationEndpointUri),
       codeVerifier: challenge.codeVerifier,
     };
   }
@@ -149,15 +149,16 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
 
     const accessTokenResponse = await fetch(request);
 
-    return this.parseTokenResponse(accessTokenResponse);
+    const { tokens } = await this.parseTokenResponse(accessTokenResponse);
+    return tokens;
   }
 
-  private async validateAuthorizationResponse(
+  protected async validateAuthorizationResponse(
     url: URL,
     options: AuthorizationCodeTokenOptions,
   ): Promise<{ code: string; state?: string }> {
-    if (typeof this.client.config.redirectUri === "string") {
-      const expectedUrl = new URL(this.client.config.redirectUri);
+    if (typeof this.config.redirectUri === "string") {
+      const expectedUrl = new URL(this.config.redirectUri);
 
       if (
         typeof url.pathname === "string" &&
@@ -191,7 +192,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     const state = params.get("state");
     const stateValidator = options.stateValidator ||
       (options.state && ((s) => s === options.state)) ||
-      this.client.config.defaults?.stateValidator;
+      this.config.defaults?.stateValidator;
 
     if (stateValidator && !await stateValidator(state)) {
       if (state === null) {
@@ -209,7 +210,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     return { code };
   }
 
-  private buildAccessTokenRequest(
+  protected buildAccessTokenRequest(
     code: string,
     codeVerifier?: string,
     requestOptions: RequestOptions = {},
@@ -226,20 +227,20 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
       body.code_verifier = codeVerifier;
     }
 
-    if (typeof this.client.config.redirectUri === "string") {
-      body.redirect_uri = this.client.config.redirectUri;
+    if (typeof this.config.redirectUri === "string") {
+      body.redirect_uri = this.config.redirectUri;
     }
 
-    if (typeof this.client.config.clientSecret === "string") {
+    if (typeof this.config.clientSecret === "string") {
       // We have a client secret, authenticate using HTTP Basic Auth as described in RFC6749 Section 2.3.1.
-      const { clientId, clientSecret } = this.client.config;
+      const { clientId, clientSecret } = this.config;
       headers.Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
     } else {
       // This appears to be a public client, include the client ID along in the body
-      body.client_id = this.client.config.clientId;
+      body.client_id = this.config.clientId;
     }
 
-    return this.buildRequest(this.client.config.tokenUri, {
+    return this.buildRequest(this.config.tokenUri, {
       method: "POST",
       headers,
       body,

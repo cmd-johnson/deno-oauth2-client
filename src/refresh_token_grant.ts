@@ -1,5 +1,5 @@
 import { RequestOptions, Tokens } from "./types.ts";
-import { OAuth2Client } from "./oauth2_client.ts";
+import { OAuth2ClientConfig } from "./oauth2_client.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";
 
 export interface RefreshTokenOptions {
@@ -13,8 +13,8 @@ export interface RefreshTokenOptions {
  * See https://tools.ietf.org/html/rfc6749#section-6
  */
 export class RefreshTokenGrant extends OAuth2GrantBase {
-  constructor(client: OAuth2Client) {
-    super(client);
+  constructor(config: OAuth2ClientConfig) {
+    super(config);
   }
 
   /** Request new tokens from the authorization server using the given refresh token. */
@@ -36,15 +36,15 @@ export class RefreshTokenGrant extends OAuth2GrantBase {
     const headers: Record<string, string> = {
       "Accept": "application/json",
     };
-    if (typeof this.client.config.clientSecret === "string") {
+    if (typeof this.config.clientSecret === "string") {
       // Note: RFC 6749 doesn't really say how a non-confidential client should
       // prove its identity when making a refresh token request, so we just don't
       // do anything and let the user deal with that (e.g. using the  requestOptions)
-      const { clientId, clientSecret } = this.client.config;
+      const { clientId, clientSecret } = this.config;
       headers.Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
     }
 
-    const req = this.buildRequest(this.client.config.tokenUri, {
+    const req = this.buildRequest(this.config.tokenUri, {
       method: "POST",
       body,
       headers,
@@ -52,6 +52,7 @@ export class RefreshTokenGrant extends OAuth2GrantBase {
 
     const accessTokenResponse = await fetch(req);
 
-    return this.parseTokenResponse(accessTokenResponse);
+    const { tokens } = await this.parseTokenResponse(accessTokenResponse);
+    return tokens;
   }
 }
