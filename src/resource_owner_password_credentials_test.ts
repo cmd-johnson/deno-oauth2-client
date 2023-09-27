@@ -269,9 +269,7 @@ Deno.test("ResourceOwnerPasswordCredentialsGrant.getToken builds a correct reque
 Deno.test("ResourceOwnerPasswordCredentialsGrant.getToken uses default scopes if no scope was specified", async () => {
   const { request } = await mockATResponse(
     () =>
-      getOAuth2Client({
-        defaults: { scope: ["default", "scopes"] },
-      }).ropc.getToken({
+      getOAuth2Client({ scope: ["default", "scopes"] }).ropc.getToken({
         username: "un",
         password: "pw",
       }),
@@ -294,9 +292,7 @@ Deno.test("ResourceOwnerPasswordCredentialsGrant.getToken uses default scopes if
 Deno.test("ResourceOwnerPasswordCredentialsGrant.getToken uses specified scopes over default scopes", async () => {
   const { request } = await mockATResponse(
     () =>
-      getOAuth2Client({
-        defaults: { scope: ["default", "scopes"] },
-      }).ropc.getToken({
+      getOAuth2Client({ scope: ["default", "scopes"] }).ropc.getToken({
         username: "un",
         password: "pw",
         scope: "notDefault",
@@ -385,15 +381,13 @@ Deno.test("ResourceOwnerPasswordCredentialsGrant.getToken uses the default reque
   const { request } = await mockATResponse(
     () =>
       getOAuth2Client({
-        defaults: {
-          requestOptions: {
-            headers: {
-              "User-Agent": "Custom User Agent",
-              "Content-Type": "application/json",
-            },
-            urlParams: { "custom-url-param": "value" },
-            body: { "custom-body-param": "value" },
+        requestOptions: {
+          headers: {
+            "User-Agent": "Custom User Agent",
+            "Content-Type": "application/json",
           },
+          urlParams: { "custom-url-param": "value" },
+          body: { "custom-body-param": "value" },
         },
       }).ropc.getToken({ username: "un", password: "pw" }),
   );
@@ -408,15 +402,13 @@ Deno.test("ResourceOwnerPasswordCredentialsGrant.getToken uses the passed reques
   const { request } = await mockATResponse(
     () =>
       getOAuth2Client({
-        defaults: {
-          requestOptions: {
-            headers: {
-              "User-Agent": "Custom User Agent",
-              "Content-Type": "application/json",
-            },
-            urlParams: { "custom-url-param": "value" },
-            body: { "custom-body-param": "value" },
+        requestOptions: {
+          headers: {
+            "User-Agent": "Custom User Agent",
+            "Content-Type": "application/json",
           },
+          urlParams: { "custom-url-param": "value" },
+          body: { "custom-body-param": "value" },
         },
       }).ropc.getToken(
         {

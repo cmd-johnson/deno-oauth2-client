@@ -27,7 +27,7 @@ export abstract class OAuth2GrantBase {
   ): Request {
     const url = this.toUrl(baseUrl);
 
-    const clientDefaults = this.client.config.defaults?.requestOptions;
+    const clientDefaults = this.client.config.requestOptions;
 
     const urlParams: Record<string, string> = {
       ...(clientDefaults?.urlParams),
@@ -61,7 +61,7 @@ export abstract class OAuth2GrantBase {
   }
 
   protected toUrl(url: string | URL): URL {
-    if (typeof (url) === "string") {
+    if (typeof url === "string") {
       return new URL(url, "http://example.com");
     }
     return url;

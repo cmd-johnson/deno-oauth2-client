@@ -86,20 +86,18 @@ Deno.test("ImplicitGrant.getAuthorizationUri works with redirectUri and multiple
 
 Deno.test("ImplicitGrant.getAuthorizationUri uses default scopes if no scope was specified", () => {
   assertMatchesUrl(
-    getOAuth2Client({
-      defaults: { scope: ["default", "scopes"] },
-    }).implicit.getAuthorizationUri(),
+    getOAuth2Client({ scope: ["default", "scopes"] }).implicit
+      .getAuthorizationUri(),
     "https://auth.server/auth?response_type=token&client_id=clientId&scope=default+scopes",
   );
 });
 
 Deno.test("ImplicitGrant.getAuthorizationUri uses specified scopes over default scopes", () => {
   assertMatchesUrl(
-    getOAuth2Client({
-      defaults: { scope: ["default", "scopes"] },
-    }).implicit.getAuthorizationUri({
-      scope: "notDefault",
-    }),
+    getOAuth2Client({ scope: ["default", "scopes"] }).implicit
+      .getAuthorizationUri({
+        scope: "notDefault",
+      }),
     "https://auth.server/auth?response_type=token&client_id=clientId&scope=notDefault",
   );
 });
@@ -238,13 +236,12 @@ Deno.test("ImplicitGrant.getToken throws if it didn't receive a state and the as
 Deno.test("ImplicitGrant.getToken throws if it didn't receive a state and the default async state validator fails", async () => {
   await assertRejects(
     () =>
-      getOAuth2Client({
-        defaults: { stateValidator: () => Promise.resolve(false) },
-      }).implicit.getToken(
-        buildImplicitAccessTokenCallback({
-          params: { access_token: "at", token_type: "Bearer" },
-        }),
-      ),
+      getOAuth2Client({ stateValidator: () => Promise.resolve(false) }).implicit
+        .getToken(
+          buildImplicitAccessTokenCallback({
+            params: { access_token: "at", token_type: "Bearer" },
+          }),
+        ),
     AuthorizationResponseError,
     "missing state",
   );
@@ -389,15 +386,15 @@ Deno.test("ImplicitGrant.getToken doesn't throw if it didn't receive a state but
 Deno.test("ImplicitGrant.getToken uses the default state validator if no state or validator was given", async () => {
   const defaultValidator = spy(() => true);
 
-  await getOAuth2Client({
-    defaults: { stateValidator: defaultValidator },
-  }).implicit.getToken(buildImplicitAccessTokenCallback({
-    params: {
-      access_token: "accessToken",
-      token_type: "tokenType",
-      state: "some_state",
-    },
-  }));
+  await getOAuth2Client({ stateValidator: defaultValidator }).implicit.getToken(
+    buildImplicitAccessTokenCallback({
+      params: {
+        access_token: "accessToken",
+        token_type: "tokenType",
+        state: "some_state",
+      },
+    }),
+  );
 
   assertSpyCall(defaultValidator, 0, { args: ["some_state"], returned: true });
   assertSpyCalls(defaultValidator, 1);
@@ -406,15 +403,15 @@ Deno.test("ImplicitGrant.getToken uses the default state validator if no state o
 Deno.test("ImplicitGrant.getToken uses the default async state validator if no state or validator was given", async () => {
   const defaultValidator = spy(() => Promise.resolve(true));
 
-  await getOAuth2Client({
-    defaults: { stateValidator: defaultValidator },
-  }).implicit.getToken(buildImplicitAccessTokenCallback({
-    params: {
-      access_token: "accessToken",
-      token_type: "tokenType",
-      state: "some_state",
-    },
-  }));
+  await getOAuth2Client({ stateValidator: defaultValidator }).implicit.getToken(
+    buildImplicitAccessTokenCallback({
+      params: {
+        access_token: "accessToken",
+        token_type: "tokenType",
+        state: "some_state",
+      },
+    }),
+  );
 
   assertSpyCallAsync(defaultValidator, 0, {
     args: ["some_state"],
@@ -427,9 +424,7 @@ Deno.test("ImplicitGrant.getToken uses the passed state validator over the defau
   const defaultValidator = spy(() => true);
   const validator = spy(() => true);
 
-  getOAuth2Client({
-    defaults: { stateValidator: defaultValidator },
-  }).implicit.getToken(
+  getOAuth2Client({ stateValidator: defaultValidator }).implicit.getToken(
     buildImplicitAccessTokenCallback({
       params: {
         access_token: "accessToken",
@@ -449,9 +444,7 @@ Deno.test("ImplicitGrant.getToken uses the passed async state validator over the
   const defaultValidator = spy(() => true);
   const validator = spy(() => Promise.resolve(true));
 
-  getOAuth2Client({
-    defaults: { stateValidator: defaultValidator },
-  }).implicit.getToken(
+  getOAuth2Client({ stateValidator: defaultValidator }).implicit.getToken(
     buildImplicitAccessTokenCallback({
       params: {
         access_token: "accessToken",
@@ -471,9 +464,7 @@ Deno.test("ImplicitGrant.getToken uses the passed state validator over the passe
   const defaultValidator = spy(() => true);
   const validator = spy(() => true);
 
-  getOAuth2Client({
-    defaults: { stateValidator: defaultValidator },
-  }).implicit.getToken(
+  getOAuth2Client({ stateValidator: defaultValidator }).implicit.getToken(
     buildImplicitAccessTokenCallback({
       params: {
         access_token: "accessToken",

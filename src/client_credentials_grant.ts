@@ -56,7 +56,7 @@ export class ClientCredentialsGrant extends OAuth2GrantBase {
       "Authorization": `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
     };
 
-    const scope = options.scope ?? this.client.config.defaults?.scope;
+    const scope = options.scope ?? this.client.config.scope;
     if (scope) {
       if (Array.isArray(scope)) {
         body.scope = scope.join(" ");

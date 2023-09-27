@@ -53,7 +53,7 @@ export class ResourceOwnerPasswordCredentialsGrant extends OAuth2GrantBase {
       "Accept": "application/json",
     };
 
-    const scope = options.scope ?? this.client.config.defaults?.scope;
+    const scope = options.scope ?? this.client.config.scope;
     if (scope) {
       if (Array.isArray(scope)) {
         body.scope = scope.join(" ");

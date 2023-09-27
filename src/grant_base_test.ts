@@ -39,23 +39,21 @@ Deno.test("OAuth2GrantBase.buildRequest works without optional parameters", asyn
 
 Deno.test("OAuth2GrantBase.buildRequest works with overrideOptions set", async () => {
   const req = getGrantBase({
-    defaults: {
-      requestOptions: {
-        body: {
-          default1: "default",
-          default2: "default",
-          default3: "default",
-        },
-        headers: {
-          "default-header1": "default",
-          "default-header2": "default",
-          "default-header3": "default",
-        },
-        urlParams: {
-          "defaultParam1": "default",
-          "defaultParam2": "default",
-          "defaultParam3": "default",
-        },
+    requestOptions: {
+      body: {
+        default1: "default",
+        default2: "default",
+        default3: "default",
+      },
+      headers: {
+        "default-header1": "default",
+        "default-header2": "default",
+        "default-header3": "default",
+      },
+      urlParams: {
+        "defaultParam1": "default",
+        "defaultParam2": "default",
+        "defaultParam3": "default",
       },
     },
   }).buildRequest("https://auth.server/req", {

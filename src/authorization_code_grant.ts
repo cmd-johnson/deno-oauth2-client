@@ -102,7 +102,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     if (typeof this.client.config.redirectUri === "string") {
       params.set("redirect_uri", this.client.config.redirectUri);
     }
-    const scope = options.scope ?? this.client.config.defaults?.scope;
+    const scope = options.scope ?? this.client.config.scope;
     if (scope) {
       params.set("scope", Array.isArray(scope) ? scope.join(" ") : scope);
     }
@@ -191,7 +191,7 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
     const state = params.get("state");
     const stateValidator = options.stateValidator ||
       (options.state && ((s) => s === options.state)) ||
-      this.client.config.defaults?.stateValidator;
+      this.client.config.stateValidator;
 
     if (stateValidator && !await stateValidator(state)) {
       if (state === null) {

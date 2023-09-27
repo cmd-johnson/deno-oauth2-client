@@ -294,7 +294,7 @@ Deno.test("ClientCredentialsGrant.getToken includes default scopes in the token 
     () =>
       getOAuth2Client({
         clientSecret: "secret",
-        defaults: { scope: ["default", "scopes"] },
+        scope: ["default", "scopes"],
       }).clientCredentials.getToken(),
   );
 
@@ -319,7 +319,7 @@ Deno.test("ClientCredentialsGrant.getToken does not include default scopes in th
     () =>
       getOAuth2Client({
         clientSecret: "secret",
-        defaults: { scope: ["default", "scopes"] },
+        scope: ["default", "scopes"],
       }).clientCredentials.getToken({ scope: "notDefault" }),
   );
 
@@ -344,15 +344,14 @@ Deno.test("ClientCredentialsGrant.getToken uses the default request options", as
     () =>
       getOAuth2Client({
         clientSecret: "secret",
-        defaults: {
-          requestOptions: {
-            headers: {
-              "User-Agent": "Custom User Agent",
-              "Content-Type": "application/json",
-            },
-            urlParams: { "custom-url-param": "value" },
-            body: { "custom-body-param": "value" },
+
+        requestOptions: {
+          headers: {
+            "User-Agent": "Custom User Agent",
+            "Content-Type": "application/json",
           },
+          urlParams: { "custom-url-param": "value" },
+          body: { "custom-body-param": "value" },
         },
       }).clientCredentials.getToken(),
   );
@@ -368,15 +367,13 @@ Deno.test("ClientCredentialsGrant.getToken uses the passed request options over 
     () =>
       getOAuth2Client({
         clientSecret: "secret",
-        defaults: {
-          requestOptions: {
-            headers: {
-              "User-Agent": "Custom User Agent",
-              "Content-Type": "application/json",
-            },
-            urlParams: { "custom-url-param": "value" },
-            body: { "custom-body-param": "value" },
+        requestOptions: {
+          headers: {
+            "User-Agent": "Custom User Agent",
+            "Content-Type": "application/json",
           },
+          urlParams: { "custom-url-param": "value" },
+          body: { "custom-body-param": "value" },
         },
       }).clientCredentials.getToken({
         requestOptions: {
