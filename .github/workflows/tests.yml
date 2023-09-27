@@ -28,47 +28,11 @@ jobs:
         with:
           deno-version: ${{ matrix.deno }} # tests across multiple Deno versions
 
-      - name: Check types
-        run: deno task check:types
-
-      - name: Run Tests
-        run: deno task test --coverage=cov_profile
+      - name: Check formatting, linting, types and run tests
+        run: deno task ok --coverage=cov_profile
 
       - name: Print Coverage
         run: deno coverage cov_profile
-
-  lint:
-    strategy:
-      matrix:
-        deno: ["v1.x", "canary"]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Setup repo
-        uses: actions/checkout@v3
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@v1
-        with:
-          deno-version: ${{ matrix.deno }}
-
-      - name: Run lint
-        run: deno lint
-
-  validateBundle:
-    strategy:
-      matrix:
-        deno: ["v1.x", "canary"]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Setup repo
-        uses: actions/checkout@v3
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@v1
-        with:
-          deno-version: ${{ matrix.deno }}
 
       - name: Bundle code
         run: deno bundle mod.ts > mod.bundle.js
