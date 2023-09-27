@@ -4,6 +4,7 @@
   },
   "tasks": {
     "check:types": "deno check **/*.ts",
-    "test": "deno test --parallel --trace-ops --doc"
+    "test": "deno test --parallel --trace-ops --doc",
+    "ok": "deno fmt --check && deno lint && deno task check:types && deno task test"
   }
 }
