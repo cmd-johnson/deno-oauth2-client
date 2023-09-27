@@ -40,6 +40,10 @@ export interface Tokens {
    */
   refreshToken?: string;
   /**
+   * The optional ID token returned by the authorization server.
+   */
+  idToken?: string;
+  /**
    * The scopes that were granted by the user.
    *
    * May be undefined if the granted scopes match the requested scopes.

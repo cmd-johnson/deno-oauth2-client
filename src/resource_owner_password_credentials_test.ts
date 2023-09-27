@@ -154,6 +154,25 @@ Deno.test("ResourceOwnerPasswordCredentialsGrant.getToken throws if the server r
   );
 });
 
+Deno.test("ResourceOwnerPasswordCredentialsGrant.getToken throws if the server response's id_token property is present but not a string", async () => {
+  await assertRejects(
+    () =>
+      mockATResponse(
+        () =>
+          getOAuth2Client().ropc.getToken({ username: "un", password: "pw" }),
+        {
+          body: {
+            access_token: "at",
+            token_type: "tt",
+            id_token: 123 as any,
+          },
+        },
+      ),
+    TokenResponseError,
+    "Invalid token response: id_token is not a string",
+  );
+});
+
 Deno.test("ResourceOwnerPasswordCredentialsGrant.getToken throws if the server response's expires_in property is present but not a number", async () => {
   await assertRejects(
     () =>

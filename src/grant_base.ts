@@ -7,6 +7,7 @@ interface AccessTokenResponse {
   "token_type": string;
   "expires_in"?: number;
   "refresh_token"?: string;
+  "id_token"?: string;
   scope?: string;
 }
 
@@ -112,6 +113,15 @@ export abstract class OAuth2GrantBase {
       );
     }
     if (
+      body.id_token !== undefined &&
+      typeof body.id_token !== "string"
+    ) {
+      throw new TokenResponseError(
+        "id_token is not a string",
+        response,
+      );
+    }
+    if (
       body.expires_in !== undefined && typeof body.expires_in !== "number"
     ) {
       throw new TokenResponseError(
@@ -133,6 +143,9 @@ export abstract class OAuth2GrantBase {
 
     if (body.refresh_token) {
       tokens.refreshToken = body.refresh_token;
+    }
+    if (body.id_token) {
+      tokens.idToken = body.id_token;
     }
     if (body.expires_in) {
       tokens.expiresIn = body.expires_in;
