@@ -32,7 +32,7 @@ jobs:
         run: deno task check:types
 
       - name: Run Tests
-        run: deno test --coverage=cov_profile
+        run: deno task test --coverage=cov_profile
 
       - name: Print Coverage
         run: deno coverage cov_profile
