@@ -28,6 +28,9 @@ jobs:
         with:
           deno-version: ${{ matrix.deno }} # tests across multiple Deno versions
 
+      - name: Check types
+        run: deno task check:types
+
       - name: Run Tests
         run: deno test --coverage=cov_profile
 
