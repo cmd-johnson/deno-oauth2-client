@@ -14,7 +14,7 @@ interface AuthorizationUriOptionsWithPKCE {
   /**
    * Scopes to request with the authorization request.
    *
-   * If an array is passed, it is concatinated using spaces as per
+   * If an array is passed, it is concatenated using spaces as per
    * https://tools.ietf.org/html/rfc6749#section-3.3
    */
   scope?: string | string[];
