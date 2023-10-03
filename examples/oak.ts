@@ -11,9 +11,7 @@ const oauth2Client = new OAuth2Client({
   authorizationEndpointUri: "https://github.com/login/oauth/authorize",
   tokenUri: "https://github.com/login/oauth/access_token",
   redirectUri: "http://localhost:8000/oauth2/callback",
-  defaults: {
-    scope: "read:user",
-  },
+  scope: "read:user",
 });
 
 type AppState = {

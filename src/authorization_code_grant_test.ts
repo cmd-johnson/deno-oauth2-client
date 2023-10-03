@@ -148,7 +148,7 @@ Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses default scopes if no scope was specified", async () => {
   const { uri, codeVerifier } = await getOAuth2Client({
-    defaults: { scope: ["default", "scopes"] },
+    scope: ["default", "scopes"],
   }).code.getAuthorizationUri();
 
   const codeChallenge = uri.searchParams.get("code_challenge");
@@ -164,7 +164,7 @@ Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses default scopes if no 
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses specified scopes over default scopes", async () => {
   const { uri, codeVerifier } = await getOAuth2Client({
-    defaults: { scope: ["default", "scopes"] },
+    scope: ["default", "scopes"],
   }).code.getAuthorizationUri({
     scope: "notDefault",
   });
@@ -257,21 +257,19 @@ Deno.test("AuthorizationCodeGrant.getAuthorizationUri works with redirectUri and
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses default scopes if no scope was specified with PKCE disabled", async () => {
   assertMatchesUrl(
-    (await getOAuth2Client({
-      defaults: { scope: ["default", "scopes"] },
-    }).code.getAuthorizationUri({ disablePkce: true })).uri,
+    (await getOAuth2Client({ scope: ["default", "scopes"] }).code
+      .getAuthorizationUri({ disablePkce: true })).uri,
     "https://auth.server/auth?response_type=code&client_id=clientId&scope=default+scopes",
   );
 });
 
 Deno.test("AuthorizationCodeGrant.getAuthorizationUri uses specified scopes over default scopes with PKCE disabled", async () => {
   assertMatchesUrl(
-    (await getOAuth2Client({
-      defaults: { scope: ["default", "scopes"] },
-    }).code.getAuthorizationUri({
-      scope: "notDefault",
-      disablePkce: true,
-    })).uri,
+    (await getOAuth2Client({ scope: ["default", "scopes"] }).code
+      .getAuthorizationUri({
+        scope: "notDefault",
+        disablePkce: true,
+      })).uri,
     "https://auth.server/auth?response_type=code&client_id=clientId&scope=notDefault",
   );
 });
@@ -756,15 +754,13 @@ Deno.test("AuthorizationCodeGrant.getToken uses the default request options", as
   const { request } = await mockATResponse(
     () =>
       getOAuth2Client({
-        defaults: {
-          requestOptions: {
-            headers: {
-              "User-Agent": "Custom User Agent",
-              "Content-Type": "application/json",
-            },
-            urlParams: { "custom-url-param": "value" },
-            body: { "custom-body-param": "value" },
+        requestOptions: {
+          headers: {
+            "User-Agent": "Custom User Agent",
+            "Content-Type": "application/json",
           },
+          urlParams: { "custom-url-param": "value" },
+          body: { "custom-body-param": "value" },
         },
       }).code.getToken(buildAccessTokenCallback({
         params: { code: "authCode" },
@@ -781,15 +777,13 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed request options over 
   const { request } = await mockATResponse(
     () =>
       getOAuth2Client({
-        defaults: {
-          requestOptions: {
-            headers: {
-              "User-Agent": "Custom User Agent",
-              "Content-Type": "application/json",
-            },
-            urlParams: { "custom-url-param": "value" },
-            body: { "custom-body-param": "value" },
+        requestOptions: {
+          headers: {
+            "User-Agent": "Custom User Agent",
+            "Content-Type": "application/json",
           },
+          urlParams: { "custom-url-param": "value" },
+          body: { "custom-body-param": "value" },
         },
       }).code.getToken(
         buildAccessTokenCallback({
@@ -819,11 +813,11 @@ Deno.test("AuthorizationCodeGrant.getToken uses the default state validator if n
 
   await mockATResponse(
     () =>
-      getOAuth2Client({
-        defaults: { stateValidator: defaultValidator },
-      }).code.getToken(buildAccessTokenCallback({
-        params: { code: "authCode", state: "some_state" },
-      })),
+      getOAuth2Client({ stateValidator: defaultValidator }).code.getToken(
+        buildAccessTokenCallback({
+          params: { code: "authCode", state: "some_state" },
+        }),
+      ),
   );
 
   assertSpyCall(defaultValidator, 0, { args: ["some_state"], returned: true });
@@ -835,11 +829,11 @@ Deno.test("AuthorizationCodeGrant.getToken supports async default state validato
 
   await mockATResponse(
     () =>
-      getOAuth2Client({
-        defaults: { stateValidator: defaultValidator },
-      }).code.getToken(buildAccessTokenCallback({
-        params: { code: "authCode", state: "some_state" },
-      })),
+      getOAuth2Client({ stateValidator: defaultValidator }).code.getToken(
+        buildAccessTokenCallback({
+          params: { code: "authCode", state: "some_state" },
+        }),
+      ),
   );
 
   assertSpyCallAsync(defaultValidator, 0, {
@@ -855,9 +849,7 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over 
 
   await mockATResponse(
     () =>
-      getOAuth2Client({
-        defaults: { stateValidator: defaultValidator },
-      }).code.getToken(
+      getOAuth2Client({ stateValidator: defaultValidator }).code.getToken(
         buildAccessTokenCallback({
           params: { code: "authCode", state: "some_state" },
         }),
@@ -876,9 +868,7 @@ Deno.test("AuthorizationCodeGrant.getToken uses the passed state validator over 
 
   await mockATResponse(
     () =>
-      getOAuth2Client({
-        defaults: { stateValidator: defaultValidator },
-      }).code.getToken(
+      getOAuth2Client({ stateValidator: defaultValidator }).code.getToken(
         buildAccessTokenCallback({
           params: { code: "authCode", state: "some_state" },
         }),
