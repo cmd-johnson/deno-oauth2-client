@@ -1,10 +1,10 @@
 // deno-lint-ignore-file camelcase
 
-import { assertEquals } from "https://deno.land/std@0.161.0/testing/asserts.ts";
+import { assertEquals } from "https://deno.land/std@0.203.0/assert/assert_equals.ts";
 import {
   returnsNext,
   stub,
-} from "https://deno.land/std@0.161.0/testing/mock.ts";
+} from "https://deno.land/std@0.203.0/testing/mock.ts";
 import { OAuth2Client, OAuth2ClientConfig } from "./oauth2_client.ts";
 import { Tokens } from "./types.ts";
 

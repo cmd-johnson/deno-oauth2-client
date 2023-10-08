@@ -1,10 +1,9 @@
-import { serve } from "https://deno.land/std@0.161.0/http/server.ts";
 import {
   Cookie,
   deleteCookie,
   getCookies,
   setCookie,
-} from "https://deno.land/std@0.161.0/http/cookie.ts";
+} from "https://deno.land/std@0.203.0/http/cookie.ts";
 import { OAuth2Client } from "https://deno.land/x/oauth2_client/mod.ts";
 
 const oauth2Client = new OAuth2Client({
@@ -89,4 +88,4 @@ async function handleCallback(req: Request): Promise<Response> {
 }
 
 // Start the app
-serve(handler, { port: 8000 });
+Deno.serve({ port: 8000 }, handler);

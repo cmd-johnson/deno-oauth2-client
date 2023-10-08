@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "https://deno.land/x/oauth2_client/": "./"
+  },
+  "tasks": {
+    "check:types": "deno check **/*.ts",
+    "test": "deno test --parallel --trace-ops --doc"
+  }
+}
