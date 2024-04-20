@@ -1,5 +1,6 @@
 interface ErrorResponseParams {
-  error: string;
+  error?: string;
+  errors?: object[];
   "error_description"?: string;
   "error_uri"?: string;
   state?: string;
@@ -14,7 +15,8 @@ export class MissingClientSecretError extends Error {
 
 /** Generic error returned by an OAuth 2.0 authorization server. */
 export class OAuth2ResponseError extends Error {
-  public readonly error: string;
+  public readonly error?: string;
+  public readonly errors?: object[];
   public readonly errorDescription?: string;
   public readonly errorUri?: string;
   public readonly state?: string;
@@ -23,6 +25,7 @@ export class OAuth2ResponseError extends Error {
     super(response.error_description || response.error);
 
     this.error = response.error;
+    this.errors = response.errors;
     this.errorDescription = response.error_description;
     this.errorUri = response.error_uri;
     this.state = response.state;
