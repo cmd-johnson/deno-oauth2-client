@@ -71,7 +71,6 @@ async function handleCallback(req: Request): Promise<Response> {
   loginStates.delete(sessionCookie);
 
   // Exchange the authorization code for an access token
-  console.log(req.url);
   const tokens = await oauth2Client.code.getToken(req.url, loginState);
 
   // Use the access token to make an authenticated API request
