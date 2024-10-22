@@ -4,6 +4,6 @@
   },
   "tasks": {
     "check:types": "deno check **/*.ts",
-    "test": "deno test --parallel --trace-ops --doc"
+    "test": "deno test --parallel --trace-leaks --doc"
   }
 }

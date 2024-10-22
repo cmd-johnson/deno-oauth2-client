@@ -5,7 +5,7 @@ import { OAuth2GrantBase } from "./grant_base.ts";
 import { RequestOptions } from "./types.ts";
 
 class OAuth2Grant extends OAuth2GrantBase {
-  public buildRequest(
+  public override buildRequest(
     baseUrl: string | URL,
     options: RequestOptions,
     overrideOptions: RequestOptions = {},

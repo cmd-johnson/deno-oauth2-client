@@ -73,7 +73,7 @@ export async function mockATResponse(
   const status = response?.status ?? 200;
 
   const fetchStub = stub(
-    window,
+    globalThis,
     "fetch",
     returnsNext([
       Promise.resolve(new Response(body, { headers, status })),
