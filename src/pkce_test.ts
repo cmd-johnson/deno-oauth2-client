@@ -1,11 +1,5 @@
-import {
-  assertEquals,
-  assertMatch,
-} from "https://deno.land/std@0.203.0/assert/mod.ts";
-import {
-  returnsNext,
-  stub,
-} from "https://deno.land/std@0.203.0/testing/mock.ts";
+import { assertEquals, assertMatch } from "@std/assert";
+import { returnsNext, stub } from "@std/testing/mock";
 
 import { _internals as pkceInternals, createPkceChallenge } from "./pkce.ts";
 

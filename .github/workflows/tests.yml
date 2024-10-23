@@ -37,6 +37,9 @@ jobs:
       - name: Print Coverage
         run: deno coverage cov_profile
 
+      - name: Publish (dry run)
+        run: deno publish --dry-run
+
   lint:
     strategy:
       matrix:

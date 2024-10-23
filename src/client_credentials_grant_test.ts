@@ -4,7 +4,7 @@ import {
   assertMatch,
   assertNotMatch,
   assertRejects,
-} from "https://deno.land/std@0.203.0/assert/mod.ts";
+} from "@std/assert";
 
 import {
   MissingClientSecretError,
