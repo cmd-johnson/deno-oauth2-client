@@ -2,8 +2,8 @@
 
 import { assertEquals } from "@std/assert/equals";
 import { returnsNext, stub } from "@std/testing/mock";
-import { OAuth2Client, OAuth2ClientConfig } from "./oauth2_client.ts";
-import { Tokens } from "./types.ts";
+import { OAuth2Client, type OAuth2ClientConfig } from "./oauth2_client.ts";
+import type { Tokens } from "./types.ts";
 
 export function getOAuth2Client(
   overrideConfig: Partial<OAuth2ClientConfig> = {},

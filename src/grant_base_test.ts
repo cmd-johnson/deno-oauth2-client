@@ -1,8 +1,7 @@
 import { assertEquals } from "@std/assert/equals";
-
-import { OAuth2Client, OAuth2ClientConfig } from "./oauth2_client.ts";
+import { OAuth2Client, type OAuth2ClientConfig } from "./oauth2_client.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";
-import { RequestOptions } from "./types.ts";
+import type { RequestOptions } from "./types.ts";
 
 class OAuth2Grant extends OAuth2GrantBase {
   public override buildRequest(
