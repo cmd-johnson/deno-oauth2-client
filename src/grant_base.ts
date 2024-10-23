@@ -1,6 +1,6 @@
 import { OAuth2ResponseError, TokenResponseError } from "./errors.ts";
-import { OAuth2Client } from "./oauth2_client.ts";
-import { RequestOptions, Tokens } from "./types.ts";
+import type { OAuth2Client } from "./oauth2_client.ts";
+import type { RequestOptions, Tokens } from "./types.ts";
 
 interface AccessTokenResponse {
   "access_token": string;
