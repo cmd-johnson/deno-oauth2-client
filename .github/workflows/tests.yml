@@ -28,6 +28,9 @@ jobs:
         with:
           deno-version: ${{ matrix.deno }} # tests across multiple Deno versions
 
+      - name: Publish (dry run)
+        run: deno publish --dry-run
+
       - name: Check types
         run: deno task check:types
 
@@ -36,9 +39,6 @@ jobs:
 
       - name: Print Coverage
         run: deno coverage cov_profile
-
-      - name: Publish (dry run)
-        run: deno publish --dry-run
 
   lint:
     strategy:
