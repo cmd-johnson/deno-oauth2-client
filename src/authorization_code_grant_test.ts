@@ -4,13 +4,13 @@ import {
   assertMatch,
   assertNotMatch,
   assertRejects,
-} from "https://deno.land/std@0.203.0/assert/mod.ts";
+} from "@std/assert";
 import {
   assertSpyCall,
   assertSpyCallAsync,
   assertSpyCalls,
   spy,
-} from "https://deno.land/std@0.203.0/testing/mock.ts";
+} from "@std/testing/mock";
 
 import {
   AuthorizationResponseError,

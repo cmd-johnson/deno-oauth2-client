@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.203.0/assert/assert_equals.ts";
+import { assertEquals } from "@std/assert/equals";
 import { getOAuth2Client, mockATResponse } from "./test_utils.ts";
 
 Deno.test("RefreshTokenGrant.refresh works without optional options", async () => {

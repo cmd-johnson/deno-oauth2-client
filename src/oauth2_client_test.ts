@@ -1,4 +1,4 @@
-import { assert } from "https://deno.land/std@0.203.0/assert/assert.ts";
+import { assert } from "@std/assert/assert";
 
 import { OAuth2Client } from "./oauth2_client.ts";
 import { AuthorizationCodeGrant } from "./authorization_code_grant.ts";

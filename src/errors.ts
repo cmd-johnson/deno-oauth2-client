@@ -28,7 +28,9 @@ export class OAuth2ResponseError extends Error {
     this.state = response.state;
   }
 
-  public static fromURLSearchParams(params: URLSearchParams) {
+  public static fromURLSearchParams(
+    params: URLSearchParams,
+  ): OAuth2ResponseError {
     const error = params.get("error");
     if (error === null) {
       throw new TypeError("error URL parameter must be set");

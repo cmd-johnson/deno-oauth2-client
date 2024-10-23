@@ -3,7 +3,7 @@ import { ClientCredentialsGrant } from "./client_credentials_grant.ts";
 import { ImplicitGrant } from "./implicit_grant.ts";
 import { RefreshTokenGrant } from "./refresh_token_grant.ts";
 import { ResourceOwnerPasswordCredentialsGrant } from "./resource_owner_password_credentials.ts";
-import { RequestOptions } from "./types.ts";
+import type { RequestOptions } from "./types.ts";
 
 export interface OAuth2ClientConfig {
   /** The client ID provided by the authorization server. */
@@ -38,35 +38,38 @@ export class OAuth2Client {
    *
    * See RFC6749, section 4.1.
    */
-  public code = new AuthorizationCodeGrant(this);
+  public code: AuthorizationCodeGrant = new AuthorizationCodeGrant(this);
 
   /**
    * Implements the Implicit Grant.
    *
    * See RFC6749, section 4.2.
    */
-  public implicit = new ImplicitGrant(this);
+  public implicit: ImplicitGrant = new ImplicitGrant(this);
 
   /**
    * Implements the Resource Owner Password Credentials Grant.
    *
    * See RFC6749, section 4.3.
    */
-  public ropc = new ResourceOwnerPasswordCredentialsGrant(this);
+  public ropc: ResourceOwnerPasswordCredentialsGrant =
+    new ResourceOwnerPasswordCredentialsGrant(this);
 
   /**
    * Implements the Resource Owner Password Credentials Grant.
    *
    * See RFC6749, section 4.4.
    */
-  public clientCredentials = new ClientCredentialsGrant(this);
+  public clientCredentials: ClientCredentialsGrant = new ClientCredentialsGrant(
+    this,
+  );
 
   /**
    * Implements the Refresh Token Grant.
    *
    * See RFC6749, section 6.
    */
-  public refreshToken = new RefreshTokenGrant(this);
+  public refreshToken: RefreshTokenGrant = new RefreshTokenGrant(this);
 
   constructor(
     public readonly config: Readonly<OAuth2ClientConfig>,
