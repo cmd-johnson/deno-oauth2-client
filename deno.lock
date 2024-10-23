@@ -12,6 +12,7 @@
     "jsr:@std/encoding@1": "1.0.5",
     "jsr:@std/encoding@^1.0.5": "1.0.5",
     "jsr:@std/fs@^1.0.4": "1.0.4",
+    "jsr:@std/http@*": "1.0.8",
     "jsr:@std/http@1": "1.0.8",
     "jsr:@std/internal@^1.0.4": "1.0.4",
     "jsr:@std/io@0.224": "0.224.9",
@@ -30,7 +31,7 @@
         "jsr:@std/bytes@1",
         "jsr:@std/crypto",
         "jsr:@std/encoding@1",
-        "jsr:@std/http",
+        "jsr:@std/http@1",
         "jsr:@std/media-types"
       ]
     },
@@ -41,7 +42,7 @@
         "jsr:@std/assert@1",
         "jsr:@std/bytes@1",
         "jsr:@std/crypto",
-        "jsr:@std/http",
+        "jsr:@std/http@1",
         "jsr:@std/io",
         "jsr:@std/media-types",
         "jsr:@std/path@1",

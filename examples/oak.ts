@@ -1,9 +1,9 @@
-import { Application, Router } from "jsr:@oak/oak";
+import { Application, Router } from "https://deno.land/x/oak@v11.1.0/mod.ts";
 import {
   MemoryStore,
   Session,
 } from "https://deno.land/x/oak_sessions@v4.0.5/mod.ts";
-import { OAuth2Client } from "jsr:@cmd-johnson/deno-oauth2-client";
+import { OAuth2Client } from "https://deno.land/x/oauth2_client/mod.ts";
 
 const oauth2Client = new OAuth2Client({
   clientId: Deno.env.get("CLIENT_ID")!,
