@@ -1,5 +1,5 @@
 import { OAuth2ResponseError, TokenResponseError } from "./errors.ts";
-import { OAuth2Client } from "./oauth2_client.ts";
+import { OAuth2ClientConfig } from "./oauth2_client.ts";
 import { RequestOptions, Tokens } from "./types.ts";
 
 interface AccessTokenResponse {
@@ -17,7 +17,7 @@ interface AccessTokenResponse {
  */
 export abstract class OAuth2GrantBase {
   constructor(
-    protected readonly client: OAuth2Client,
+    protected readonly config: OAuth2ClientConfig,
   ) {}
 
   protected buildRequest(
@@ -27,7 +27,7 @@ export abstract class OAuth2GrantBase {
   ): Request {
     const url = this.toUrl(baseUrl);
 
-    const clientDefaults = this.client.config.defaults?.requestOptions;
+    const clientDefaults = this.config.defaults?.requestOptions;
 
     const urlParams: Record<string, string> = {
       ...(clientDefaults?.urlParams),
@@ -67,7 +67,11 @@ export abstract class OAuth2GrantBase {
     return url;
   }
 
-  protected async parseTokenResponse(response: Response): Promise<Tokens> {
+  protected async parseTokenResponse(
+    response: Response,
+  ): Promise<
+    { tokens: Tokens; body: AccessTokenResponse & Record<string, unknown> }
+  > {
     if (!response.ok) {
       throw await this.getTokenResponseError(response);
     }
@@ -141,11 +145,14 @@ export abstract class OAuth2GrantBase {
       tokens.scope = body.scope.split(" ");
     }
 
-    return tokens;
+    return {
+      tokens,
+      body: body as AccessTokenResponse & Record<string, unknown>,
+    };
   }
 
   /** Tries to build an AuthError from the response and defaults to AuthServerResponseError if that fails. */
-  private async getTokenResponseError(
+  protected async getTokenResponseError(
     response: Response,
   ): Promise<OAuth2ResponseError | TokenResponseError> {
     try {

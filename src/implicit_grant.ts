@@ -1,4 +1,4 @@
-import type { OAuth2Client } from "./oauth2_client.ts";
+import type { OAuth2ClientConfig } from "./oauth2_client.ts";
 import { OAuth2GrantBase } from "./grant_base.ts";
 import { AuthorizationResponseError, OAuth2ResponseError } from "./errors.ts";
 import type { RequestOptions, Tokens } from "./types.ts";
@@ -40,26 +40,26 @@ export interface ImplicitTokenOptions {
 }
 
 export class ImplicitGrant extends OAuth2GrantBase {
-  constructor(client: OAuth2Client) {
-    super(client);
+  constructor(config: OAuth2ClientConfig) {
+    super(config);
   }
 
   /** Builds a URI you can redirect a user to to make the authorization request. */
   public getAuthorizationUri(options: ImplicitUriOptions = {}): URL {
     const params = new URLSearchParams();
     params.set("response_type", "token");
-    params.set("client_id", this.client.config.clientId);
-    if (typeof this.client.config.redirectUri === "string") {
-      params.set("redirect_uri", this.client.config.redirectUri);
+    params.set("client_id", this.config.clientId);
+    if (typeof this.config.redirectUri === "string") {
+      params.set("redirect_uri", this.config.redirectUri);
     }
-    const scope = options.scope ?? this.client.config.defaults?.scope;
+    const scope = options.scope ?? this.config.defaults?.scope;
     if (scope) {
       params.set("scope", Array.isArray(scope) ? scope.join(" ") : scope);
     }
     if (options.state) {
       params.set("state", options.state);
     }
-    return new URL(`?${params}`, this.client.config.authorizationEndpointUri);
+    return new URL(`?${params}`, this.config.authorizationEndpointUri);
   }
 
   /**
@@ -77,8 +77,8 @@ export class ImplicitGrant extends OAuth2GrantBase {
       ? authResponseUri
       : new URL(authResponseUri);
 
-    if (typeof this.client.config.redirectUri === "string") {
-      const expectedUrl = new URL(this.client.config.redirectUri);
+    if (typeof this.config.redirectUri === "string") {
+      const expectedUrl = new URL(this.config.redirectUri);
 
       if (
         typeof url.pathname === "string" &&
@@ -115,7 +115,7 @@ export class ImplicitGrant extends OAuth2GrantBase {
     const state = params.get("state");
     const stateValidator = options.stateValidator ||
       (options.state && ((s) => s === options.state)) ||
-      this.client.config.defaults?.stateValidator;
+      this.config.defaults?.stateValidator;
 
     const tokens: Tokens = {
       accessToken,
