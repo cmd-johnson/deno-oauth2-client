@@ -230,13 +230,19 @@ export class AuthorizationCodeGrant extends OAuth2GrantBase {
       body.redirect_uri = this.client.config.redirectUri;
     }
 
+    if (typeof this.client.config.clientId === "string") {
+      body.client_id = this.client.config.clientId;
+    }
+
     if (typeof this.client.config.clientSecret === "string") {
-      // We have a client secret, authenticate using HTTP Basic Auth as described in RFC6749 Section 2.3.1.
+      // Some resource servers require the client secret to be sent in the
+      // request body, and some require it as Basic Auth. We supply both.
+      body.client_secret = this.client.config.clientSecret;
+
+      // We have a client secret, authenticate using HTTP Basic Auth as
+      // described in RFC6749 Section 2.3.1.
       const { clientId, clientSecret } = this.client.config;
       headers.Authorization = `Basic ${btoa(`${clientId}:${clientSecret}`)}`;
-    } else {
-      // This appears to be a public client, include the client ID along in the body
-      body.client_id = this.client.config.clientId;
     }
 
     return this.buildRequest(this.client.config.tokenUri, {

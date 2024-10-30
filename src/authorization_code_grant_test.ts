@@ -722,7 +722,7 @@ Deno.test("AuthorizationCodeGrant.getToken correctly adds the redirectUri to the
   );
 });
 
-Deno.test("AuthorizationCodeGrant.getToken sends the clientId as form parameter if no clientSecret is set", async () => {
+Deno.test("AuthorizationCodeGrant.getToken sends the clientId as form parameter", async () => {
   const { request } = await mockATResponse(
     () =>
       getOAuth2Client().code.getToken(buildAccessTokenCallback({
@@ -733,7 +733,21 @@ Deno.test("AuthorizationCodeGrant.getToken sends the clientId as form parameter 
     (await request.formData()).get("client_id"),
     "clientId",
   );
-  assertEquals(request.headers.get("Authorization"), null);
+});
+
+Deno.test("AuthorizationCodeGrant.getToken sends the clientSecret as form parameter if it is set", async () => {
+  const { request } = await mockATResponse(
+    () =>
+      getOAuth2Client({ clientSecret: "super-secret" }).code.getToken(
+        buildAccessTokenCallback({
+          params: { code: "authCode" },
+        }),
+      ),
+  );
+  assertEquals(
+    (await request.formData()).get("client_secret"),
+    "super-secret",
+  );
 });
 
 Deno.test("AuthorizationCodeGrant.getToken sends the correct Authorization header if the clientSecret is set", async () => {
@@ -749,7 +763,18 @@ Deno.test("AuthorizationCodeGrant.getToken sends the correct Authorization heade
     request.headers.get("Authorization"),
     "Basic Y2xpZW50SWQ6c3VwZXItc2VjcmV0",
   );
-  assertEquals((await request.formData()).get("client_id"), null);
+});
+
+Deno.test("AuthorizationCodeGrant.getToken sends no Authorization header if clientSecret is not set", async () => {
+  const { request } = await mockATResponse(
+    () =>
+      getOAuth2Client().code.getToken(
+        buildAccessTokenCallback({
+          params: { code: "authCode" },
+        }),
+      ),
+  );
+  assertEquals(request.headers.get("Authorization"), null);
 });
 
 Deno.test("AuthorizationCodeGrant.getToken uses the default request options", async () => {
