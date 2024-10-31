@@ -37,7 +37,7 @@ Currently supported OAuth 2.0 grants:
 
 ```ts ignore
 import { Application, Router } from "jsr:@oak/oak";
-import { Session } from "https://deno.land/x/oak_sessions@v4.0.5/mod.ts";
+import { Session } from "https://deno.land/x/oak_sessions@v4.1.12/mod.ts";
 import { OAuth2Client } from "jsr:@cmd-johnson/deno-oauth2-client";
 
 const oauth2Client = new OAuth2Client({
