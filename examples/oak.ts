@@ -1,8 +1,5 @@
-import { Application, Router } from "@oak/oak";
-import {
-  MemoryStore,
-  Session,
-} from "https://deno.land/x/oak_sessions@v4.0.5/mod.ts";
+import { Application, type Middleware, Router } from "@oak/oak";
+import { Session } from "https://deno.land/x/oak_sessions@v4.0.5/mod.ts";
 import { OAuth2Client } from "@cmd-johnson/deno-oauth2-client";
 
 const oauth2Client = new OAuth2Client({
@@ -72,20 +69,7 @@ const app = new Application<AppState>();
 app.keys = ["super-secret-key"];
 
 // Set up the session middleware
-const sessionStore = new MemoryStore();
-app.use(Session.initMiddleware(sessionStore, {
-  cookieSetOptions: {
-    httpOnly: true,
-    sameSite: "lax",
-    // Enable for when running outside of localhost
-    // secure: true,
-    signed: true,
-  },
-  cookieGetOptions: {
-    signed: true,
-  },
-  expireAfterSeconds: 60 * 10,
-}));
+app.use(Session.initMiddleware() as unknown as Middleware<AppState>);
 
 // Mount the router
 app.use(router.allowedMethods(), router.routes());
