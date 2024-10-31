@@ -3,8 +3,8 @@ import {
   deleteCookie,
   getCookies,
   setCookie,
-} from "https://deno.land/std@0.203.0/http/cookie.ts";
-import { OAuth2Client } from "https://deno.land/x/oauth2_client/mod.ts";
+} from "@std/http/cookie";
+import { OAuth2Client } from "@cmd-johnson/deno-oauth2-client";
 
 const oauth2Client = new OAuth2Client({
   clientId: Deno.env.get("CLIENT_ID")!,
