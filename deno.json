@@ -1,5 +1,5 @@
 {
-  "name": "@cmd-johnson/deno-oauth2-client",
+  "name": "@cmd-johnson/oauth2-client",
   "version": "1.0.3",
   "imports": {
     "@oak/oak": "jsr:@oak/oak@^17.1.2",
