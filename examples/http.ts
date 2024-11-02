@@ -4,7 +4,7 @@ import {
   getCookies,
   setCookie,
 } from "@std/http/cookie";
-import { OAuth2Client } from "@cmd-johnson/deno-oauth2-client";
+import { OAuth2Client } from "@cmd-johnson/oauth2-client";
 
 const oauth2Client = new OAuth2Client({
   clientId: Deno.env.get("CLIENT_ID")!,

@@ -1,6 +1,6 @@
 import { Application, type Middleware, Router } from "@oak/oak";
 import { Session } from "https://deno.land/x/oak_sessions@v4.1.12/mod.ts";
-import { OAuth2Client } from "@cmd-johnson/deno-oauth2-client";
+import { OAuth2Client } from "@cmd-johnson/oauth2-client";
 
 const oauth2Client = new OAuth2Client({
   clientId: Deno.env.get("CLIENT_ID")!,
