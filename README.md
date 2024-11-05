@@ -3,6 +3,12 @@
 ![Tests](https://github.com/cmd-johnson/deno-oauth2-client/workflows/Tests/badge.svg)
 [![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/raw.githubusercontent.com/cmd-johnson/deno-oauth2-client/master/mod.ts)
 
+> [!IMPORTANT]
+> This package will no longer be published to https://deno.land/x or support
+> `http:` imports starting from version 2.0.0. Instead, future versions will be
+> published to [JSR](https://jsr.io/) and require `jsr:` imports. See the
+> [migration guide](#v1---v2) for instructions on how to migrate.
+
 Minimalistic OAuth 2.0 client for Deno. Inspired by
 [js-client-oauth2](https://github.com/mulesoft/js-client-oauth2/).
 
@@ -138,3 +144,16 @@ With `v1.0.0`:
 #### `RefreshTokenGrant`
 
 - No changes necessary
+
+### `v1.*.*` -> `v2.*.*`
+
+This package is now published to [JSR](https://jsr.io/) and no longer to
+https://deno.land/x. To migrate, replace HTTP imports with the root
+[`jsr:` import](https://jsr.io/docs/native-imports).
+
+```diff
+- import { OAuth2Client } from "https://deno.land/x/oauth2_client/mod.ts";
++ import { OAuth2Client } from "jsr:@cmd-johnson/oauth2-client";
+
+// ...
+```
