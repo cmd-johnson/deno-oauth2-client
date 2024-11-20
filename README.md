@@ -1,5 +1,6 @@
 # OAuth2 Client for Deno
 
+[![JSR](https://jsr.io/badges/@cmd-johnson/oauth2-client)](https://jsr.io/@cmd-johnson/oauth2-client)
 ![Tests](https://github.com/cmd-johnson/deno-oauth2-client/workflows/Tests/badge.svg)
 [![deno doc](https://doc.deno.land/badge.svg)](https://jsr.io/@cmd-johnson/oauth2-client/doc)
 
