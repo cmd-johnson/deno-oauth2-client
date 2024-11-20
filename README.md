@@ -1,7 +1,7 @@
 # OAuth2 Client for Deno
 
 ![Tests](https://github.com/cmd-johnson/deno-oauth2-client/workflows/Tests/badge.svg)
-[![deno doc](https://doc.deno.land/badge.svg)](https://doc.deno.land/https/raw.githubusercontent.com/cmd-johnson/deno-oauth2-client/master/mod.ts)
+[![deno doc](https://doc.deno.land/badge.svg)](https://jsr.io/@cmd-johnson/oauth2-client/doc)
 
 > [!IMPORTANT]
 > This package will no longer be published to https://deno.land/x or support
@@ -33,7 +33,7 @@ Currently supported OAuth 2.0 grants:
 
 ## Usage
 
-### GitHub API example using [oak](https://deno.land/x/oak)
+### GitHub API example using [oak](https://jsr.io/@oak/oak)
 
 ```ts ignore
 import { Application } from "jsr:@oak/oak@^17.1.3/application";
