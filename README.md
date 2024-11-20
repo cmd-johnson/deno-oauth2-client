@@ -36,9 +36,13 @@ Currently supported OAuth 2.0 grants:
 ### GitHub API example using [oak](https://deno.land/x/oak)
 
 ```ts ignore
-import { Application, Router } from "jsr:@oak/oak";
-import { Session } from "https://deno.land/x/oak_sessions@v4.1.12/mod.ts";
-import { OAuth2Client } from "jsr:@cmd-johnson/deno-oauth2-client";
+import { Application } from "jsr:@oak/oak@^17.1.3/application";
+import { Router } from "jsr:@oak/oak@^17.1.3/router";
+import {
+  MemoryStore,
+  Session,
+} from "https://deno.land/x/oak_sessions@v9.0.0/mod.ts";
+import { OAuth2Client } from "jsr:@cmd-johnson/oauth2-client@^2.0.0";
 
 const oauth2Client = new OAuth2Client({
   clientId: Deno.env.get("CLIENT_ID")!,
