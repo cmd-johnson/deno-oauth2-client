@@ -150,8 +150,8 @@ export abstract class OAuth2GrantBase {
   ): Promise<OAuth2ResponseError | TokenResponseError> {
     try {
       const body = await response.json();
-      if (typeof body.error !== "string") {
-        throw new TypeError("body should contain an error");
+      if (typeof body.error !== "string" && !Array.isArray(body.errors)) {
+        throw new TypeError("body should contain one or more errors");
       }
       return new OAuth2ResponseError(body);
     } catch {
